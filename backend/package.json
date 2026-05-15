@@ -1,0 +1,21 @@
+{
+  "name": "smart-bin-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch server.js",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^9.6.0",
+    "cors": "^2.8.6",
+    "express": "^4.22.1",
+    "mqtt": "^5.15.1",
+    "socket.io": "^4.8.3"
+  },
+  "main": "server.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}
