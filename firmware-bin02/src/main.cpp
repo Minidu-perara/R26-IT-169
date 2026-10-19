@@ -387,6 +387,10 @@ void loop() {
 
     // ── ADAPTIVE branch ───────────────────────────────────────────────────
     static State prevState = State::STABLE;
+    // State carried by the last accepted ADAPTIVE transmission. Seeded from
+    // the first evaluation, so booting does not add a transmission.
+    static State reportedState = State::STABLE;
+    static bool  reportedSeeded = false;
     float deadband = computeDeadband(fsm.dFdtHr), dFdt = fsm.dFdtHr;
     // No fill-based decision is possible before the first valid echo. Keep
     // telemetry null and the initial policy state until an actual measurement.
@@ -395,6 +399,7 @@ void loop() {
 
     bool stateChanged = (fsm.state != prevState);
     prevState = fsm.state;
+    if (!reportedSeeded) { reportedState = fsm.state; reportedSeeded = true; }
 
     float fillDelta      = fabs(r.fillPct - lastTxFill);
     const uint32_t effectiveInterval = gatewayInterval(fsm.txInterval, now);
@@ -402,15 +407,28 @@ void loop() {
     const bool urgentTransition = urgent && stateChanged;
     const bool deadbandReady = lastTxMs == 0 || now - lastTxMs >= DEADBAND_COOLDOWN_MS;
     bool deadbandCrossed = (fillDelta >= deadband) && deadbandReady;
+    // Non-urgent state changes (into CONSERVE or ACTIVE, back to STABLE) used
+    // to wait for the next timer or deadband, up to 30 min in STABLE, so the
+    // dashboard showed a stale state. Report the new state once it differs
+    // from the last one sent. ALERT is left to urgentTransition. Comparing
+    // with the last sent state, not the previous tick, means a change during
+    // the cooldown is still reported once the cooldown ends, and a flip that
+    // returns to the sent state sends nothing. DEADBAND_COOLDOWN_MS caps a
+    // threshold oscillation at one transmission per 10 s.
+    const bool stateTransition = fsm.state != State::ALERT &&
+                                 fsm.state != reportedState && deadbandReady;
 
-    if (urgentTransition || timerFired || deadbandCrossed) {
+    if (urgentTransition || timerFired || deadbandCrossed || stateTransition) {
         const char* txTrigger;
         if (urgentTransition) {
             txTrigger = "urgent-transition";
         } else if (timerFired) {
             txTrigger = effectiveInterval < fsm.txInterval ? "gateway-timer" : "timer";
-        } else {
+        } else if (deadbandCrossed) {
             txTrigger = "deadband";
+        } else {
+            // Last, so this label counts only the transmissions this trigger added.
+            txTrigger = "state-transition";
         }
         const char* stateCause;
         if (r.fillFaultSustained)               stateCause = "fill-sensor-fault";
@@ -426,8 +444,9 @@ void loop() {
             // txCount and the AIMD step untouched -- see its comment.
             noteDroppedTx(txTrigger, now, effectiveInterval);
         } else {
-            lastTxMs   = now;
-            lastTxFill = r.fillPct;
+            lastTxMs      = now;
+            lastTxFill    = r.fillPct;
+            reportedState = fsm.state;
 
             Serial.printf("[FSM] state=%s interval=%lus deadband=%.1f%% delta=%.1f%% reason=%s\n",
                           stateName(fsm.state),
