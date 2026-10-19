@@ -1,0 +1,9 @@
+{
+  "src/main.cpp": "0be35cc2187f80824d0954aa2067fb4f74de6c9936e9f0dc76c32f8db976a4a4",
+  "src/fsm.h": "592ed06e44de63ccc6b76e11c822daccaa9ca366bfd49cd07285e1a6385efa40",
+  "src/sensors.h": "371ada2efd74eebce877697f41f0bd6beab1f8586ad5f8daab8f0070e75c9830",
+  "include/config.h": "c9fbdde0d3b5be509e408b4026993f617b9e9e855fdd768cd1121e9b71327d82",
+  "platformio.ini": "97a8e36cefdf4d3275a5d8defdf31c2af74cfcfd6af627ed9827c250a2841ba7",
+  "lib/BoundedDHT/BoundedDHT.cpp": "38b3b43350bfe9bc3e4d921f5a8a6dd1b0292c8c45a8274658695e7ba0b4bac3",
+  ".pio/build/esp32dev/firmware.elf": "bf3dea32887575cb11b7aa89691824773f15cbd1975fa5d0e093927470f8a0ce"
+}

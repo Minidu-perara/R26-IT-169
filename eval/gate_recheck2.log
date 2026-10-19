@@ -1,0 +1,24 @@
+[  0.000] ets Jul 29 2019 12:21:46
+[  0.000] 
+[  0.016] rst:0x1 (POWERON_RESET),boot:0x17 (SPI_FAST_FLASH_BOOT)
+[  0.016] configsip: 0, SPIWP:0xee
+[  0.016] clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+[  0.016] mode:DIO, clock div:2
+[  0.016] load:0x3fff0030,len:1184
+[  0.031] load:0x40078000,len:13232
+[  0.031] load:0x40080400,len:3028
+[  0.031] entry 0x400805e4
+[  0.500] [WiFi] no usable cache - scanning
+[  4.219] [WiFi] path=SCAN ssid="Redmi Note 14" assoc_ms=3717 ch=4 rssi=-37 bssid=1A:4D:AD:2B:6B:EC ip=10.72.205.50
+[  4.234] [RTC] fresh boot, initializing
+[  4.234] [MQTT] broker 10.72.205.244:1883, waiting up to 30s
+[  4.266] [MQTT] connecting... ok
+[  4.281] [MQTT] subscribed mode+override+battery: ok
+[  4.281] [MQ] warming up...
+[  5.281] [MQ] warmup 3s remaining
+[  6.281] [MQ] warmup 2s remaining
+[  7.281] [MQ] warmup 1s remaining
+[  8.281] [MQ] warmup 0s remaining
+[  9.281] [MQ] warmup 4294967s remaining
+[  9.281] [MQ] warmup complete
+[  9.281] [FSM] started in ADAPTIVE mode

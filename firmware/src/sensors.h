@@ -2,12 +2,23 @@
 #include <Arduino.h>
 
 struct SensorReading {
-    float fillPct;    // 0–100 %
+    float fillPct;    // 0–100 % — last good value while fillFault is set
     float tempC;
     float humidity;
     int   gasRaw135;
     int   gasRaw5;
     float battPct;    // 0–100 % (simulated via potentiometer)
+    bool  powerPresent;
+    float busVoltageV;
+    float currentMa;
+    float powerMw;
+    float energyMWh;
+    uint32_t powerMeasurementMs;
+
+    // Ultrasonic dropout tracking. fillPct is HELD (not zeroed) while faulting,
+    // so a dropout can never look like the bin emptying. See readSensors().
+    bool  fillFault;          // true while the fault counter is above zero
+    bool  fillFaultSustained; // true once the counter exceeds FILL_FAULT_HOLD_MAX
 };
 
 // Median-of-3 filter for HC-SR04
@@ -29,7 +40,9 @@ namespace Ultrasonic {
         float s[3];
         for (int i = 0; i < 3; i++) {
             s[i] = measureCm();
-            delay(30);
+            delay(60); // HC-SR04 needs >=60ms between triggers or the next
+                       // trigger catches the previous burst's residual echo
+                       // and reports a spuriously short distance (ringing)
         }
         // sort ascending (inline bubble, only 3 elements)
         for (int i = 0; i < 2; i++)

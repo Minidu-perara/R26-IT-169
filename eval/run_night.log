@@ -1,0 +1,34 @@
+2026-08-30 05:10:02 === run_night.sh starting ===
+2026-08-30 05:10:03 POST /api/run {"label":"baseline"} -> 200
+2026-08-30 05:10:03 POST /api/mode/bin01 {"mode":"BASELINE"} -> 200
+2026-08-30 05:10:03 POST /api/battery {"value":85} -> 200
+2026-08-30 05:10:03 [baseline] phase start, baseline row total=15
+2026-08-30 05:40:03 [baseline] t=1800s total_rows=45
+2026-08-30 06:10:03 [baseline] t=3600s total_rows=75
+2026-08-30 06:40:04 POST /api/battery {"value":65} -> 200
+2026-08-30 06:40:04 [baseline] t=5400s total_rows=104
+2026-08-30 07:10:04 [baseline] t=7201s total_rows=124
+2026-08-30 07:40:04 [baseline] t=9001s total_rows=124
+[RUN-ALERT] 2026-08-30 07:40:04 baseline: zero new rows since last snapshot (t=9001s, total=124)
+2026-08-30 08:10:05 [baseline] t=10801s total_rows=124
+[RUN-ALERT] 2026-08-30 08:10:05 baseline: zero new rows since last snapshot (t=10801s, total=124)
+2026-08-30 08:10:05 [baseline] phase complete
+2026-08-30 08:10:05 POST /api/run {"label":"adaptive"} -> 200
+2026-08-30 08:10:05 POST /api/mode/bin01 {"mode":"ADAPTIVE"} -> 200
+2026-08-30 08:10:05 POST /api/battery {"value":85} -> 200
+2026-08-30 08:10:05 [adaptive] phase start, baseline row total=124
+2026-08-30 08:40:06 [adaptive] t=1800s total_rows=124
+[RUN-ALERT] 2026-08-30 08:40:06 adaptive: zero new rows since last snapshot (t=1800s, total=124)
+2026-08-30 09:10:06 [adaptive] t=3601s total_rows=124
+[RUN-ALERT] 2026-08-30 09:10:06 adaptive: zero new rows since last snapshot (t=3601s, total=124)
+2026-08-30 09:40:06 POST /api/battery {"value":65} -> 200
+2026-08-30 09:40:06 [adaptive] t=5401s total_rows=124
+[RUN-ALERT] 2026-08-30 09:40:06 adaptive: zero new rows since last snapshot (t=5401s, total=124)
+2026-08-30 10:10:07 [adaptive] t=7201s total_rows=124
+[RUN-ALERT] 2026-08-30 10:10:07 adaptive: zero new rows since last snapshot (t=7201s, total=124)
+2026-08-30 10:40:07 [adaptive] t=9002s total_rows=124
+[RUN-ALERT] 2026-08-30 10:40:07 adaptive: zero new rows since last snapshot (t=9002s, total=124)
+2026-08-30 11:10:07 [adaptive] t=10802s total_rows=124
+[RUN-ALERT] 2026-08-30 11:10:07 adaptive: zero new rows since last snapshot (t=10802s, total=124)
+2026-08-30 11:10:07 [adaptive] phase complete
+2026-08-30 11:10:07 === run_night.sh complete ===

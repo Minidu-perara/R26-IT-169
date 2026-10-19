@@ -1,0 +1,38 @@
+[  0.000] ets Jul 29 2019 12:21:46
+[  0.000] 
+[  0.000] rst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+[  0.000] configsip: 0, SPIWP:0xee
+[  0.015] clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+[  0.015] mode:DIO, clock div:2
+[  0.015] load:0x3fff0030,len:1184
+[  0.015] load:0x40078000,len:13232
+[  0.015] load:0x40080400,len:3028
+[  0.015] entry 0x400805e4
+[  3.000] [WiFi] connecting to Redmi Note 14.....
+[  3.000] [WiFi] connected, IP=10.72.205.50
+[  3.000] [RTC] fresh boot, initializing
+[  3.000] [MQTT] broker 10.97.85.244:1883, waiting up to 30s
+[  6.015] [MQTT] connecting... failed rc=-2
+[ 14.015] [MQTT] connecting... failed rc=-2
+[ 22.031] [MQTT] connecting... failed rc=-2
+[ 30.031] [MQTT] connecting... failed rc=-2
+[ 38.046] [MQTT] connecting... failed rc=-2
+[ 38.046] [MQTT] no broker after 30s - starting anyway; the FSM runs and transmissions are logged as [TX-DROPPED]
+[ 38.046] [MQ] warming up...
+[ 39.046] [MQ] warmup 4s remaining
+[ 40.062] [MQ] warmup 3s remaining
+[ 41.046] [MQ] warmup 2s remaining
+[ 42.046] [MQ] warmup 1s remaining
+[ 43.062] [MQ] warmup 0s remaining
+[ 43.062] [MQ] warmup complete
+[ 43.062] [FSM] started in ADAPTIVE mode
+[ 46.062] [MQTT] connecting... failed rc=-2
+[ 46.203] [TX-DROPPED] reason=deadband dropped=1 rc=-2 (txCount held at 0)
+[ 51.312] [MQTT] connecting... failed rc=-2
+[ 56.671] [MQTT] connecting... failed rc=-2
+[ 61.953] [MQTT] connecting... failed rc=-2
+[ 67.281] [MQTT] connecting... failed rc=-2
+[ 72.531] [MQTT] connecting... failed rc=-2
+[ 77.781] [MQTT] connecting... failed rc=-2
+[ 83.187] [MQTT] connecting... failed rc=-2
+[ 88.593] [MQTT] connecting... failed rc=-2

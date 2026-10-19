@@ -1,0 +1,110 @@
+[  0.000] ets Jul 29 2019 12:21:46
+[  0.000] 
+[  0.000] rst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+[  0.000] configsip: 0, SPIWP:0xee
+[  0.000] clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+[  0.000] mode:DIO, clock div:2
+[  0.000] load:0x3fff0030,len:1184
+[  0.015] load:0x40078000,len:13232
+[  0.015] load:0x40080400,len:3028
+[  0.015] entry 0x400805e4
+[  3.000] [WiFi] connecting to Redmi Note 14.....
+[  3.015] [WiFi] connected, IP=10.72.205.50
+[  3.015] [RTC] fresh boot, initializing
+[  3.015] [MQTT] broker 10.72.205.244:1883, waiting up to 30s
+[  3.625] [MQTT] connecting... ok
+[  3.640] [MQTT] subscribed mode+override+battery: ok
+[  3.640] [MQ] warming up...
+[  4.640] [MQ] warmup 3s remaining
+[  5.640] [MQ] warmup 2s remaining
+[  6.640] [MQ] warmup 1s remaining
+[  7.640] [MQ] warmup 0s remaining
+[  8.640] [MQ] warmup 4294967s remaining
+[  8.640] [MQ] warmup complete
+[  8.640] [FSM] started in ADAPTIVE mode
+[ 14.718] [TX] {"node_id":"bin01","ts":14353,"fill_pct":24.02632,"temp_c":null,"humidity":null,"gas_135":379,"gas_5":0,"batt_pct":80,"state":"STABLE","mode":"ADAPTIVE","tx_count":1,"tx_dropped":0,"interval":300,"deadband":10,"dfdt":0,"reason":"deadband"}
+[ 14.718] [FSM] state=STABLE interval=300s deadband=10.0% delta=24.0% reason=deadband
+[ 19.312] [TX] {"node_id":"bin01","ts":18953,"fill_pct":0,"temp_c":null,"humidity":null,"gas_135":333,"gas_5":0,"batt_pct":80,"state":"STABLE","mode":"ADAPTIVE","tx_count":2,"tx_dropped":0,"interval":300,"deadband":10,"dfdt":0,"reason":"deadband"}
+[ 19.312] [FSM] state=STABLE interval=300s deadband=10.0% delta=24.0% reason=deadband
+[ 28.687] [TX] {"node_id":"bin01","ts":28336,"fill_pct":10.21605,"temp_c":null,"humidity":null,"gas_135":378,"gas_5":0,"batt_pct":80,"state":"STABLE","mode":"ADAPTIVE","tx_count":3,"tx_dropped":0,"interval":300,"deadband":10,"dfdt":0,"reason":"deadband"}
+[ 28.703] [FSM] state=STABLE interval=300s deadband=10.0% delta=10.2% reason=deadband
+[ 33.406] [TX] {"node_id":"bin01","ts":33036,"fill_pct":0,"temp_c":null,"humidity":null,"gas_135":394,"gas_5":0,"batt_pct":80,"state":"STABLE","mode":"ADAPTIVE","tx_count":4,"tx_dropped":0,"interval":300,"deadband":10,"dfdt":0,"reason":"deadband"}
+[ 33.406] [FSM] state=STABLE interval=300s deadband=10.0% delta=10.2% reason=deadband
+[ 46.875] [MQTT] connecting... failed rc=-2
+[ 47.015] [TX-DROPPED] reason=deadband dropped=1 rc=-2 (txCount held at 4)
+[ 52.140] [MQTT] connecting... failed rc=-2
+[ 57.406] [MQTT] connecting... failed rc=-2
+[ 62.687] [MQTT] connecting... failed rc=-2
+[ 68.000] [MQTT] connecting... failed rc=-2
+[ 73.297] [MQTT] connecting... failed rc=-2
+[ 75.672] [MQTT] connecting... ok
+[ 75.687] [MQTT] subscribed mode+override+battery: ok
+[ 76.172] Guru Meditation Error: Core  1 panic'ed (Interrupt wdt timeout on CPU1). 
+[ 76.172] 
+[ 76.187] Core  1 register dump:
+[ 76.187] PC      : 0x400d50bc  PS      : 0x00060335  A0      : 0x800d5188  A1      : 0x3ffb1f60  
+[ 76.187] A2      : 0x000093a7  A3      : 0x00000000  A4      : 0x3ffc3af8  A5      : 0x3ffc4168  
+[ 76.203] A6      : 0x00000000  A7      : 0x3ffc4168  A8      : 0x00027100  A9      : 0x000093a7  
+[ 76.218] A10     : 0x00000000  A11     : 0x00000000  A12     : 0x0480879e  A13     : 0x00000010  
+[ 76.218] A14     : 0x00000028  A15     : 0x00000001  SAR     : 0x00000004  EXCCAUSE: 0x00000006  
+[ 76.234] EXCVADDR: 0x00000000  LBEG    : 0x40084601  LEND    : 0x40084609  LCOUNT  : 0x00000027  
+[ 76.234] 
+[ 76.234] 
+[ 76.234] Backtrace: 0x400d50b9:0x3ffb1f60 0x400d5185:0x3ffb1f80 0x400d5221:0x3ffb20e0 0x400d3114:0x3ffb2110 0x400d43d2:0x3ffb2140 0x400da671:0x3ffb2290
+[ 76.234] 
+[ 76.234] 
+[ 76.250] Core  0 register dump:
+[ 76.250] PC      : 0x4015205e  PS      : 0x00060a35  A0      : 0x800e31d5  A1      : 0x3ffbc8a0  
+[ 76.265] A2      : 0x00000000  A3      : 0x80000001  A4      : 0x8008f1c4  A5      : 0x3ffb35c0  
+[ 76.265] A6      : 0x00000003  A7      : 0x00060023  A8      : 0x800e2dd2  A9      : 0x3ffbc870  
+[ 76.265] A10     : 0x00000000  A11     : 0x80000001  A12     : 0x8008f1c4  A13     : 0x3ffbc7a0  
+[ 76.281] A14     : 0x00000003  A15     : 0x00060023  SAR     : 0x0000001d  EXCCAUSE: 0x00000006  
+[ 76.297] EXCVADDR: 0x00000000  LBEG    : 0x00000000  LEND    : 0x00000000  LCOUNT  : 0x00000000  
+[ 76.297] 
+[ 76.297] 
+[ 76.297] Backtrace: 0x4015205b:0x3ffbc8a0 0x400e31d2:0x3ffbc8c0 0x4008d230:0x3ffbc8e0
+[ 76.297] 
+[ 76.297] 
+[ 76.297] 
+[ 76.297] 
+[ 76.297] ELF file SHA256: 54b33890e774afdf
+[ 76.297] 
+[ 76.547] Rebooting...
+[ 76.547] ets Jul 29 2019 12:21:46
+[ 76.547] 
+[ 76.547] rst:0xc (SW_CPU_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+[ 76.547] configsip: 0, SPIWP:0xee
+[ 76.562] clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+[ 76.562] mode:DIO, clock div:2
+[ 76.562] load:0x3fff0030,len:1184
+[ 76.562] load:0x40078000,len:13232
+[ 76.562] load:0x40080400,len:3028
+[ 76.562] entry 0x400805e4
+[ 79.547] [WiFi] connecting to Redmi Note 14.....
+[ 79.547] [WiFi] connected, IP=10.72.205.50
+[ 79.547] [RTC] fresh boot, initializing
+[ 79.562] [MQTT] broker 10.72.205.244:1883, waiting up to 30s
+[ 79.593] [MQTT] connecting... ok
+[ 79.593] [MQTT] subscribed mode+override+battery: ok
+[ 79.593] [MQ] warming up...
+[ 80.593] [MQ] warmup 3s remaining
+[ 81.593] [MQ] warmup 2s remaining
+[ 82.593] [MQ] warmup 1s remaining
+[ 83.593] [MQ] warmup 0s remaining
+[ 84.593] [MQ] warmup 4294967s remaining
+[ 84.609] [MQ] warmup complete
+[ 84.609] [FSM] started in ADAPTIVE mode
+[ 84.765] [TX] {"node_id":"bin01","ts":7860,"fill_pct":18.47513,"temp_c":null,"humidity":null,"gas_135":320,"gas_5":0,"batt_pct":80,"state":"STABLE","mode":"ADAPTIVE","tx_count":1,"tx_dropped":0,"interval":300,"deadband":10,"dfdt":0,"reason":"deadband"}
+[ 84.765] [FSM] state=STABLE interval=300s deadband=10.0% delta=18.5% reason=deadband
+[ 85.890] [TX] {"node_id":"bin01","ts":8986,"fill_pct":53.49724,"temp_c":null,"humidity":null,"gas_135":366,"gas_5":44,"batt_pct":80,"state":"STABLE","mode":"ADAPTIVE","tx_count":2,"tx_dropped":0,"interval":300,"deadband":10,"dfdt":0,"reason":"deadband"}
+[ 85.890] [FSM] state=STABLE interval=300s deadband=10.0% delta=35.0% reason=deadband
+[ 87.062] [TX] {"node_id":"bin01","ts":10152,"fill_pct":18.47513,"temp_c":null,"humidity":null,"gas_135":355,"gas_5":0,"batt_pct":80,"state":"STABLE","mode":"ADAPTIVE","tx_count":3,"tx_dropped":0,"interval":300,"deadband":10,"dfdt":0,"reason":"deadband"}
+[ 87.062] [FSM] state=STABLE interval=300s deadband=10.0% delta=35.0% reason=deadband
+[ 89.328] [TX] {"node_id":"bin01","ts":12424,"fill_pct":7.101973,"temp_c":null,"humidity":null,"gas_135":372,"gas_5":0,"batt_pct":80,"state":"STABLE","mode":"ADAPTIVE","tx_count":4,"tx_dropped":0,"interval":300,"deadband":10,"dfdt":0,"reason":"deadband"}
+[ 89.328] [FSM] state=STABLE interval=300s deadband=10.0% delta=11.4% reason=deadband
+[ 92.859] [TX] {"node_id":"bin01","ts":15951,"fill_pct":26.10237,"temp_c":null,"humidity":null,"gas_135":378,"gas_5":0,"batt_pct":80,"state":"STABLE","mode":"ADAPTIVE","tx_count":5,"tx_dropped":0,"interval":300,"deadband":10,"dfdt":0,"reason":"deadband"}
+[ 92.859] [FSM] state=STABLE interval=300s deadband=10.0% delta=19.0% reason=deadband
+[ 96.406] [TX] {"node_id":"bin01","ts":19500,"fill_pct":6.560396,"temp_c":null,"humidity":null,"gas_135":371,"gas_5":0,"batt_pct":80,"state":"STABLE","mode":"ADAPTIVE","tx_count":6,"tx_dropped":0,"interval":300,"deadband":10,"dfdt":0,"reason":"deadband"}
+[ 96.406] [FSM] state=STABLE interval=300s deadband=10.0% delta=19.5% reason=deadband
+[ 97.531] [TX] {"node_id":"bin01","ts":20626,"fill_pct":19.82908,"temp_c":null,"humidity":null,"gas_135":383,"gas_5":0,"batt_pct":80,"state":"STABLE","mode":"ADAPTIVE","tx_count":7,"tx_dropped":0,"interval":300,"deadband":10,"dfdt":0,"reason":"deadband"}
+[ 97.531] [FSM] state=STABLE interval=300s deadband=10.0% delta=13.3% reason=deadband

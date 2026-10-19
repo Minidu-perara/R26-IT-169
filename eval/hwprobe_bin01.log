@@ -1,0 +1,193 @@
+ets Jul 29 2019 12:21:46
+
+rst:0x1 (POWERON_RESET),boot:0x17 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0030,len:1184
+load:0x40078000,len:13232
+load:0x40080400,len:3028
+entry 0x400805e4
+
+[PROBE] bin01 start
+[PINS] TRIG=13 ECHO=14 DHT=4 MQ135=34 SDA=21 SCL=22
+[I2C] found: 0x40
+[INA219] bus=4.856 V current=167.4 mA
+[DHT22] 30.1 C  80.2 %RH
+[HCSR04] min=9.9 med=11.3 max=11.6 cm timeouts=0/10
+[MQ135] raw=481
+[I2C] found: 0x40
+[INA219] bus=4.852 V current=165.4 mA
+[DHT22] 30.1 C  80.2 %RH
+[HCSR04] min=11.3 med=11.3 max=11.3 cm timeouts=0/10
+[MQ135] raw=496
+[I2C] found: 0x40
+[INA219] bus=4.860 V current=166.0 mA
+[DHT22] 30.1 C  80.2 %RH
+[HCSR04] min=9.9 med=16.4 max=17.4 cm timeouts=0/10
+[MQ135] raw=528
+[I2C] found: 0x40
+[INA219] bus=4.860 V current=165.9 mA
+[DHT22] 30.1 C  80.2 %RH
+[HCSR04] min=11.6 med=17.1 max=22.8 cm timeouts=0/10
+[MQ135] raw=496
+[I2C] found: 0x40
+[INA219] bus=4.856 V current=165.3 mA
+[DHT22] 30.0 C  80.2 %RH
+[HCSR04] min=17.1 med=17.1 max=18.7 cm timeouts=0/10
+[MQ135] raw=487
+[I2C] found: 0x40
+[INA219] bus=4.856 V current=165.5 mA
+[DHT22] 30.0 C  80.2 %RH
+[HCSR04] min=8.2 med=9.9 max=16.1 cm timeouts=0/10
+[MQ135] raw=458
+[I2C] found: 0x40
+[INA219] bus=4.860 V current=166.9 mA
+[DHT22] 30.1 C  80.2 %RH
+[HCSR04] min=12.3 med=16.8 max=17.4 cm timeouts=0/10
+[MQ135] raw=498
+[I2C] found: 0x40
+[INA219] bus=4.856 V current=165.9 mA
+[DHT22] read FAILED (NaN)
+[HCSR04] min=9.9 med=11.3 max=11.6 cm timeouts=0/10
+[MQ135] raw=494
+[I2C] found: 0x40
+[INA219] bus=4.860 V current=166.6 mA
+[DHT22] read FAILED (NaN)
+[HCSR04] min=10.3 med=10.6 max=12.3 cm timeouts=0/10
+[MQ135] raw=486
+[I2C] found: 0x40
+[INA219] bus=4.856 V current=165.1 mA
+[DHT22] 30.1 C  80.2 %RH
+[HCSR04] min=10.3 med=11.6 max=13.4 cm timeouts=0/10
+[MQ135] raw=487
+[I2C] found: 0x40
+[INA219] bus=4.856 V current=166.0 mA
+[DHT22] 30.0 C  80.2 %RH
+[HCSR04] min=11.6 med=12.0 max=12.0 cm timeouts=0/10
+[MQ135] raw=498
+[I2C] found: 0x40
+[INA219] bus=4.856 V current=166.3 mA
+[DHT22] 30.1 C  80.2 %RH
+[HCSR04] min=10.3 med=13.4 max=17.1 cm timeouts=0/10
+[MQ135] raw=486
+[I2C] found: 0x40
+[INA219] bus=4.856 V current=165.3 mA
+[DHT22] 30.1 C  80.2 %RH
+[HCSR04] min=11.6 med=16.1 max=20.0 cm timeouts=0/10
+[MQ135] raw=497
+[I2C] found: 0x40
+[INA219] bus=4.856 V current=166.4 mA
+[DHT22] 30.1 C  80.2 %RH
+[HCSR04] min=9.2 med=10.6 max=10.6 cm timeouts=0/10
+[MQ135] raw=504
+[I2C] found: 0x40
+[INA219] bus=4.860 V current=166.6 mA
+[DHT22] 30.1 C  80.2 %RH
+[HCSR04] min=8.5 med=11.6 max=18.7 cm timeouts=1/10
+[MQ135] raw=483
+[I2C] found: 0x40
+[INA219] bus=4.856 V current=165.1 mA
+[DHT22] 30.1 C  80.2 %RH
+[HCSR04] min=12.0 med=12.0 max=12.0 cm timeouts=0/10
+[MQ135] raw=465
+[I2C] found: 0x40
+[INA219] bus=4.856 V current=166.8 mA
+[DHT22] 30.1 C  80.2 %RH
+[HCSR04] min=10.3 med=16.1 max=16.4 cm timeouts=0/10
+[MQ135] raw=478
+[I2C] found: 0x40
+[INA219] bus=4.856 V current=165.2 mA
+[DHT22] 30.1 C  80.1 %RH
+[HCSR04] min=9.6 med=9.9 max=11.6 cm timeouts=0/10
+[MQ135] raw=478
+[I2C] found: 0x40
+[INA219] bus=4.856 V current=166.0 mA
+[DHT22] read FAILED (NaN)
+[HCSR04] min=9.9 med=10.3 max=10.3 cm timeouts=0/10
+[MQ135] raw=467
+[I2C] found: 0x40
+[INA219] bus=4.860 V current=165.5 mA
+[DHT22] read FAILED (NaN)
+[HCSR04] min=10.3 med=10.3 max=10.3 cm timeouts=0/10
+[MQ135] raw=471
+[I2C] found: 0x40
+[INA219] bus=4.860 V current=165.4 mA
+[DHT22] 30.1 C  80.1 %RH
+[HCSR04] min=10.3 med=10.3 max=10.3 cm timeouts=0/10
+[MQ135] raw=493
+[I2C] found: 0x40
+[INA219] bus=4.856 V current=166.4 mA
+[DHT22] 30.1 C  80.1 %RH
+[HCSR04] min=10.3 med=10.6 max=10.6 cm timeouts=0/10
+[MQ135] raw=479
+[I2C] found: 0x40
+[INA219] bus=4.856 V current=165.0 mA
+[DHT22] 30.0 C  80.2 %RH
+[HCSR04] min=10.3 med=12.3 max=12.3 cm timeouts=0/10
+[MQ135] raw=481
+[I2C] found: 0x40
+[INA219] bus=4.856 V current=165.7 mA
+[DHT22] 30.1 C  80.1 %RH
+[HCSR04] min=10.3 med=10.3 max=10.3 cm timeouts=0/10
+[MQ135] raw=483
+[I2C] found: 0x40
+[INA219] bus=4.860 V current=166.7 mA
+[DHT22] 30.1 C  80.1 %RH
+[HCSR04] min=10.3 med=10.3 max=10.3 cm timeouts=0/10
+[MQ135] raw=480
+[I2C] found: 0x40
+[INA219] bus=4.856 V current=164.8 mA
+[DHT22] 30.1 C  80.2 %RH
+[HCSR04] min=10.3 med=10.3 max=10.3 cm timeouts=0/10
+[MQ135] raw=463
+[I2C] found: 0x40
+[INA219] bus=4.856 V current=165.1 mA
+[DHT22] 30.1 C  80.1 %RH
+[HCSR04] min=10.3 med=10.3 max=10.3 cm timeouts=0/10
+[MQ135] raw=474
+[I2C] found: 0x40
+[INA219] bus=4.860 V current=166.4 mA
+[DHT22] 30.1 C  80.1 %RH
+[HCSR04] min=10.3 med=10.3 max=12.0 cm timeouts=0/10
+[MQ135] raw=466
+[I2C] found: 0x40
+[INA219] bus=4.856 V current=165.3 mA
+[DHT22] 30.1 C  80.1 %RH
+[HCSR04] min=9.9 med=10.3 max=12.0 cm timeouts=0/10
+[MQ135] raw=462
+[I2C] found: 0x40
+[INA219] bus=4.856 V current=165.1 mA
+[DHT22] 30.1 C  80.1 %RH
+[HCSR04] min=9.9 med=9.9 max=9.9 cm timeouts=0/10
+[MQ135] raw=458
+[I2C] found: 0x40
+[INA219] bus=4.856 V current=166.4 mA
+[DHT22] 30.1 C  80.1 %RH
+[HCSR04] min=9.6 med=9.9 max=11.3 cm timeouts=0/10
+[MQ135] raw=462
+[I2C] found: 0x40
+[INA219] bus=4.860 V current=166.5 mA
+[DHT22] 30.1 C  80.1 %RH
+[HCSR04] min=9.9 med=9.9 max=9.9 cm timeouts=0/10
+[MQ135] raw=479
+[I2C] found: 0x40
+[INA219] bus=4.856 V current=164.9 mA
+[DHT22] 30.1 C  80.1 %RH
+[HCSR04] min=9.9 med=11.6 max=11.6 cm timeouts=0/10
+[MQ135] raw=464
+[I2C] found: 0x40
+[INA219] bus=4.856 V current=165.7 mA
+[DHT22] 30.1 C  80.1 %RH
+[HCSR04] min=11.6 med=11.6 max=22.8 cm timeouts=0/10
+[MQ135] raw=465
+[I2C] found: 0x40
+[INA219] bus=4.860 V current=166.5 mA
+[DHT22] read FAILED (NaN)
+[HCSR04] min=11.6 med=11.6 max=11.6 cm timeouts=0/10
+[MQ135] raw=458
+[I2C] found: 0x40
+[INA219] bus=4.856 V current=164.5 mA
+[DHT22] read FAILED (NaN)
+[HCSR04] min=11.6 med=20.3 max=21.6 cm timeouts=1/10
+[MQ135] raw=454

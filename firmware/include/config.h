@@ -1,13 +1,48 @@
 #pragma once
 
 // ── Wi-Fi ─────────────────────────────────────────────────────────────────
-#define WIFI_SSID   "Redmi Note 14"
-#define WIFI_PASS   "qqqqqqqq"
+// Credentials live in include/secrets.h, which is gitignored. Everything else
+// about the Wi-Fi policy stays here. If secrets.h is absent the build must
+// fail loudly here, not later as an undefined WIFI_AP1_SSID in main.cpp.
+#if defined(__has_include)
+  #if !__has_include("secrets.h")
+    #error "include/secrets.h is missing. Copy include/secrets.example.h to include/secrets.h and fill in the Wi-Fi credentials."
+  #endif
+#endif
+#include "secrets.h"
+
+#if !defined(WIFI_AP1_SSID) || !defined(WIFI_AP1_PASS) ||     !defined(WIFI_AP2_SSID) || !defined(WIFI_AP2_PASS)
+  #error "include/secrets.h is incomplete. It must define WIFI_AP1_SSID/PASS and WIFI_AP2_SSID/PASS - see include/secrets.example.h."
+#endif
+
+// Multi-AP association budget. The node caches the BSSID, channel and AP index
+// of the last successful association in RTC memory and retries that exact AP
+// directly on the next boot/wake; this skips the full channel scan, which is
+// the dominant radio-on cost of associating. WIFI_FAST_TIMEOUT_MS bounds that
+// attempt so a moved or powered-down AP costs at most this much before the
+// scanning fallback (wifiMulti.run) takes over.
+#define WIFI_FAST_TIMEOUT_MS   5000UL
+#define WIFI_SCAN_TIMEOUT_MS   8000UL   // per wifiMulti.run() attempt
 
 // ── MQTT ──────────────────────────────────────────────────────────────────
-#define MQTT_HOST   "10.97.85.244"   // broker LAN IP
+// The broker address is whatever machine runs Mosquitto on the day, so it
+// must not be a source edit. Override it at build time (one line):
+//   pio run -e esp32dev -t upload --upload-port COM6 -DMQTT_HOST_OVERRIDE='\"10.72.205.7\"'
+// The value below is only the fallback default.
+#ifdef MQTT_HOST_OVERRIDE
+  #define MQTT_HOST MQTT_HOST_OVERRIDE
+#else
+  #define MQTT_HOST "192.168.1.3"   // default broker LAN IP
+#endif
 #define MQTT_PORT   1883
 #define NODE_ID     "bin01"
+
+// Broker availability must never gate the control loop. setup() waits at most
+// MQTT_SETUP_TIMEOUT_MS for a first connection and then starts the FSM
+// regardless; loop() retries at most once every MQTT_RETRY_MS, one attempt at
+// a time, so sensing and state evaluation keep running through an outage.
+#define MQTT_SETUP_TIMEOUT_MS  30000UL
+#define MQTT_RETRY_MS           5000UL
 
 // topic helpers
 #define TOPIC_DATA      "bin/" NODE_ID "/data"
@@ -21,6 +56,11 @@
 #define PIN_MQ135   34   // ADC1_CH6, input-only
 #define PIN_MQ5     35   // ADC1_CH7, input-only
 #define PIN_DHT     4
+#define PIN_INA_SDA 21
+#define PIN_INA_SCL 22
+#define INA219_ADDRESS 0x40
+#define ENABLE_MQ5  0    // removed from the experiment after unstable floating readings
+#define NODE_SENSOR_PROFILE "fill_dht_mq135_ina219"
 
 // ── HC-SR04 ───────────────────────────────────────────────────────────────
 #define BIN_DEPTH_CM    40.0f   // empty bin = sensor to bin floor distance
@@ -52,6 +92,15 @@
 
 // ── Baseline mode ─────────────────────────────────────────────────────────
 #define BASELINE_INTERVAL  60000UL   // fixed 60 s TX in BASELINE mode
+#define DEADBAND_COOLDOWN_MS 10000UL // cap nonurgent change-trigger bursts at 6/min
 
 // ── Deep sleep (0 = live demo, 1 = energy measurement) ───────────────────
 #define DEEP_SLEEP_ENABLED 0
+
+// -- Fill-velocity estimation --------------------------------------------
+// dF/dt must be measured over a window long enough that sensor quantisation
+// does not dominate. At a 1 s tick a 0.003 %/s step already reads as 10 %/hr,
+// which made the rate trigger fire on noise. 60 s window, clamped.
+#define VEL_WINDOW_MS   60000UL   // min elapsed time before recomputing dF/dt
+#define DFDT_CLAMP      500.0f    // %/hr — guard against residual spikes
+#define FILL_FAULT_HOLD_MAX 5     // consecutive faults tolerated before flagging

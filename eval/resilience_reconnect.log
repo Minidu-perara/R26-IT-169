@@ -1,0 +1,115 @@
+[  0.016] [MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...[MQTT] connecting...ets Jul 29 2019 12:21:46
+[  0.016] 
+[  0.016] rst:ets Jul 29 2019 12:21:46
+[  0.016] 
+[  0.016] rst:ets Jul 29 2019 12:21:46
+[  0.016] 
+[  0.016] rst:ets Jul 29 2019 12:21:46
+[  0.016] 
+[  0.016] rst:ets Jul 29 2019 12:21:46
+[  0.016] 
+[  0.016] rst:ets Jul 29 2019 12:21:46
+[  0.016] 
+[  0.016] rst:ets Jul 29 2019 12:21:46
+[  0.016] 
+[  0.016] rst:ets Jul 29 2019 12:21:46
+[  0.016] 
+[  0.016] rst:ets Jul 29 2019 12:21:46
+[  0.016] 
+[  0.016] rst:ets Jul 29 2019 12:21:46
+[  0.016] 
+[  0.016] rst:ets Jul 29 2019 12:21:46
+[  0.016] 
+[  0.016] rst:ets Jul 29 2019 12:21:46
+[  0.016] 
+[  0.016] rst:ets Jul 29 2019 12:21:46
+[  0.016] 
+[  0.016] rst:ets Jul 29 2019 12:21:46
+[  0.016] 
+[  0.016] rst:ets Jul 29 2019 12:21:46
+[  0.016] 
+[  0.016] rst:ets Jul 29 2019 12:21:46
+[  0.016] 
+[  0.016] rst:ets Jul 29 2019 12:21:46
+[  0.016] 
+[  0.016] rst:ets Jul 29 2019 12:21:46
+[  0.016] 
+[  0.016] rst:ets Jul 29 2019 12:21:46
+[  0.016] 
+[  0.016] rst:ets Jul 29 2019 12:21:46
+[  0.016] 
+[  0.016] rst:ets Jul 29 2019 12:21:46
+[  0.016] 
+[  0.016] rst:ets Jul 29 2019 12:21:46
+[  0.016] 
+[  0.016] rst:ets Jul 29 2019 12:21:46
+[  0.016] 
+[  0.032] rst:ets Jul 29 2019 12:21:46
+[  0.032] 
+[  0.032] rst:ets Jul 29 2019 12:21:46
+[  0.032] 
+[  0.032] rst:ets Jul 29 2019 12:21:46
+[  0.032] 
+[  0.032] rst:ets Jul 29 2019 12:21:46
+[  0.032] 
+[  0.032] rst:ets Jul 29 2019 12:21:46
+[  0.032] 
+[  0.032] rst:ets Jul 29 2019 12:21:46
+[  0.032] 
+[  0.032] rst:ets Jul 29 2019 12:21:46
+[  0.032] 
+[  0.032] rst:ets Jul 29 2019 12:21:46
+[  0.032] 
+[  0.032] rst:ets Jul 29 2019 12:21:46
+[  0.032] 
+[  0.047] rst:ets Jul 29 2019 12:21:46
+[  0.047] 
+[  0.047] rst:ets Jul 29 2019 12:21:46
+[  0.047] 
+[  0.047] rst:ets Jul 29 2019 12:21:46
+[  0.047] 
+[  0.047] rst:ets Jul 29 2019 12:21:46
+[  0.047] 
+[  0.047] rst:ets Jul 29 2019 12:21:46
+[  0.047] 
+[  0.047] rst:ets Jul 29 2019 12:21:46
+[  0.047] 
+[  0.047] rst:ets Jul 29 2019 12:21:46
+[  0.047] 
+[  0.047] rst:ets Jul 29 2019 12:21:46
+[  0.047] 
+[  0.047] rst:ets Jul 29 2019 12:21:46
+[  0.047] 
+[  0.047] rst:ets Jul 29 201ESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (S0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+[  0.047] configsip: 0, SPIWP:0xee
+[  0.047] clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+[  0.047] mode:DIO, clock div:2
+[  0.047] load:0x3fff0030,len:1184
+[  0.047] load:0x40078000,len:13232
+[  0.047] load:0x40080400,len:3028
+[  0.047] entry 0x400805e4
+[  3.016] [WiFi] connecting to Redmi Note 14.....
+[  3.016] [WiFi] connected, IP=10.72.205.50
+[  3.016] [RTC] fresh boot, initializing
+[  3.016] [MQTT] broker 10.97.85.244:1883, waiting up to 30s
+[  6.032] [MQTT] connecting... failed rc=-2
+[ 14.032] [MQTT] connecting... failed rc=-2
+[ 22.047] [MQTT] connecting... failed rc=-2
+[ 30.047] [MQTT] connecting... failed rc=-2
+[ 38.063] [MQTT] connecting... failed rc=-2
+[ 38.063] [MQTT] no broker after 30s - starting anyway; the FSM runs and transmissions are logged as [TX-DROPPED]
+[ 38.063] [MQ] warming up...
+[ 39.063] [MQ] warmup 4s remaining
+[ 40.063] [MQ] warmup 3s remaining
+[ 41.063] [MQ] warmup 2s remaining
+[ 42.063] [MQ] warmup 1s remaining
+[ 43.063] [MQ] warmup 0s remaining
+[ 43.063] [MQ] warmup complete
+[ 43.079] [FSM] started in ADAPTIVE mode
+[ 46.079] [MQTT] connecting... failed rc=-2
+[ 51.329] [MQTT] connecting... failed rc=-2
+[ 56.672] [MQTT] connecting... failed rc=-2
+[ 61.985] [MQTT] connecting... failed rc=-2
+[ 62.125] [TX-DROPPED] reason=deadband dropped=1 rc=-2 (txCount held at 0)
+[ 67.235] [MQTT] connecting... failed rc=-2
+[ 70.000] [MQTT] connecting...

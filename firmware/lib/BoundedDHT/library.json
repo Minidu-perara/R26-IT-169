@@ -1,0 +1,8 @@
+{
+  "name": "BoundedDHT",
+  "version": "1.4.7-local.1",
+  "description": "Local Adafruit DHT driver with bounded ESP32 pulse reads",
+  "frameworks": "arduino",
+  "platforms": "espressif32",
+  "license": "MIT"
+}

@@ -26,34 +26,64 @@ struct FSMContext {
     uint32_t txInterval   = AIMD_MIN;    // T* starts at 300 s
     float    prevFill     = 0.0f;
     uint32_t lastSampleMs = 0;
+
+    // Fill-velocity window. dF/dt is held between window closures so the
+    // FSM sees a stable estimate rather than a per-tick difference.
+    float    velRefFill   = 0.0f;
+    uint32_t velRefMs     = 0;
+    bool     velPrimed    = false;
+    float    dFdtHr       = 0.0f;        // %/hr, the value the FSM acts on
 };
 
-// ── Dynamic deadband ΔF* = max(1%, 10% - dF/dt × 0.5) ───────────────────
-// dFdt in %/s, returns deadband in %
-static float computeDeadband(float dFdt) {
-    float dFdt_hr = dFdt * 3600.0f;
-    float db = 10.0f - dFdt_hr * 0.5f;
-    return max(1.0f, db);
+// Dynamic deadband uses filling only. Emptying/collection produces a negative
+// rate and must not inflate the threshold above its intended 10% ceiling.
+static float computeDeadband(float dFdtHr) {
+    const float positiveFillRate = max(0.0f, dFdtHr);
+    return constrain(10.0f - positiveFillRate * 0.5f, 1.0f, 10.0f);
+}
+
+// ── Fill velocity over a bounded window ──────────────────────────────────
+// Returns %/hr. Recomputed only once VEL_WINDOW_MS has elapsed; between
+// closures the previous estimate is held. This is what stops HC-SR04
+// quantisation and dropouts from being read as a 100,000 %/hr fill rate.
+static void updateVelocity(FSMContext& ctx, float fillPct, uint32_t nowMs) {
+    if (!ctx.velPrimed) {
+        ctx.velRefFill = fillPct;
+        ctx.velRefMs   = nowMs;
+        ctx.velPrimed  = true;
+        ctx.dFdtHr     = 0.0f;
+        return;
+    }
+    uint32_t elapsed = nowMs - ctx.velRefMs;
+    if (elapsed < VEL_WINDOW_MS) return;          // hold previous estimate
+
+    float hours = elapsed / 3600000.0f;
+    float v     = (fillPct - ctx.velRefFill) / hours;
+    ctx.dFdtHr  = constrain(v, -DFDT_CLAMP, DFDT_CLAMP);
+
+    ctx.velRefFill = fillPct;
+    ctx.velRefMs   = nowMs;
 }
 
 // ── FSM transition ────────────────────────────────────────────────────────
-// Returns true when a TX should be sent this cycle.
+// Returns true when the urgency condition is active this cycle.
 // Priority: urgency check FIRST, then battery, then activity, then default.
+// Thresholds are unchanged from the PP1 design; only the dF/dt estimate
+// feeding the rate trigger and the timing of the AIMD step have changed.
 bool fsmUpdate(FSMContext& ctx, float fillPct, float battPct,
                int gasRaw135, int gasRaw5,
                float& deadbandOut, float& dFdtOut, uint32_t nowMs) {
 
-    uint32_t dt     = nowMs - ctx.lastSampleMs;
-    float    dFdt   = (dt > 0) ? ((fillPct - ctx.prevFill) / (dt / 1000.0f)) : 0.0f;
-    dFdtOut         = dFdt;
-    deadbandOut     = computeDeadband(dFdt);
-    bool     urgent = false;
+    updateVelocity(ctx, fillPct, nowMs);
+    dFdtOut     = ctx.dFdtHr;
+    deadbandOut = computeDeadband(ctx.dFdtHr);
+    bool urgent = false;
 
     // ── 1. Urgency check (ALWAYS runs first) ─────────────────────────────
     if (fillPct >= FILL_ALERT
         || gasRaw135 > GAS135_THRESHOLD
         || gasRaw5   > GAS5_THRESHOLD
-        || (dFdt * 3600.0f) > DFDT_ALERT) {
+        || ctx.dFdtHr > DFDT_ALERT) {
         ctx.state      = State::ALERT;
         ctx.txInterval = AoI_ALERT;
         urgent         = true;
@@ -68,21 +98,32 @@ bool fsmUpdate(FSMContext& ctx, float fillPct, float battPct,
         ctx.state      = State::ACTIVE;
         ctx.txInterval = AoI_ACTIVE;
     }
-    // ── 4. Default: STABLE with battery-driven AIMD ──────────────────────
+    // ── 4. Default: STABLE. T* is left alone here; the AIMD step runs
+    //      once per transmission in fsmOnTransmit(), not once per tick. ──
     else {
         if (ctx.state != State::STABLE) ctx.txInterval = AIMD_MIN;
         ctx.state = State::STABLE;
-        if (battPct > BATT_AIMD_MD_THRESH) {
-            ctx.txInterval = (uint32_t)(ctx.txInterval * AIMD_MD);
-            ctx.txInterval = max((uint32_t)ctx.txInterval, (uint32_t)AIMD_MIN);
-        } else if (battPct < BATT_AIMD_AI_THRESH) {
-            ctx.txInterval = min((uint32_t)(ctx.txInterval + AIMD_AI), (uint32_t)AIMD_MAX);
-        }
-        // 70% ≤ batt ≤ 80%: hysteresis band, keep current interval
     }
 
     ctx.prevFill     = fillPct;
     ctx.lastSampleMs = nowMs;
 
     return urgent;
+}
+
+// ── AIMD step — called once per transmission, STABLE state only ──────────
+// Running this per loop tick (the PP1 behaviour) halved T* every second
+// while the battery was healthy, pinning it to AIMD_MIN and making the
+// control law invisible in the data. AIMD is a per-cycle law, so it belongs
+// on the transmission event.
+void fsmOnTransmit(FSMContext& ctx, float battPct) {
+    if (ctx.state != State::STABLE) return;
+
+    if (battPct > BATT_AIMD_MD_THRESH) {
+        uint32_t t = (uint32_t)(ctx.txInterval * AIMD_MD);
+        ctx.txInterval = max(t, (uint32_t)AIMD_MIN);
+    } else if (battPct < BATT_AIMD_AI_THRESH) {
+        ctx.txInterval = min((uint32_t)(ctx.txInterval + AIMD_AI), (uint32_t)AIMD_MAX);
+    }
+    // 70% ≤ batt ≤ 80%: hysteresis band, hold current interval
 }

@@ -14,7 +14,7 @@
 5. [Firmware](#5-firmware)
    - [FSM Design](#51-fsm-design)
    - [AIMD Interval Adaptation](#52-aimd-interval-adaptation)
-   - [Dynamic Deadband](#53-dynamic-deadband)
+   - [Dynamic Deadband and Fill Velocity](#53-dynamic-deadband-and-fill-velocity)
    - [Urgency Conditions](#54-urgency-conditions)
    - [BASELINE Mode](#55-baseline-mode)
    - [RTC Persistence & Fast Wi-Fi](#56-rtc-persistence--fast-wi-fi)
@@ -173,9 +173,23 @@ In **STABLE** state the TX interval T* is controlled by battery level:
 
 Bounds: **T* ∈ [300 s, 1800 s]**. T* resets to 300 s when re-entering STABLE from any other state.
 
+**When the step runs.** AIMD is a *per-cycle* control law, so exactly one step
+is applied **per transmission**, by `fsmOnTransmit()` in `fsm.h`, called from
+`main.cpp` immediately after the publish. `fsmUpdate()` — which runs on every
+1 s tick — does not touch T*.
+
+> **Fixed since PP1.** The step used to run inside `fsmUpdate()`, i.e. on every
+> 1 s loop tick. With a healthy battery T* was therefore halved once per second
+> and sat permanently on the 300 s floor, which is why `interval` reads 300 on
+> every row of the 12 May dataset and the control law is invisible there. The
+> thresholds and bounds are unchanged; only the timing of the step was wrong.
+
+The `interval` field in the payload is the T* that governed the cycle just
+closed; the new T* takes effect from the next tick.
+
 Reference: Giordano et al. (2023) — AIMD for IoT adaptive sampling.
 
-### 5.3 Dynamic Deadband
+### 5.3 Dynamic Deadband and Fill Velocity
 
 A fill-change threshold ΔF* suppresses transmissions when the bin level is stable:
 
@@ -184,6 +198,32 @@ A fill-change threshold ΔF* suppresses transmissions when the bin level is stab
 ```
 
 where `dF/dt_hr` is fill velocity in **%/hr**. Fast-filling bins get a tighter deadband (down to 1%); slowly changing bins use the full 10% deadband.
+
+**Fill velocity (`dF/dt`) is measured in %/hr end to end.** `updateVelocity()`
+in `fsm.h` computes it over a bounded window (`VEL_WINDOW_MS`, 60 s) rather than
+from a per-tick difference, and clamps it to ±`DFDT_CLAMP` (500 %/hr). Between
+window closures the previous estimate is held. `fsmUpdate()` returns the value
+already in %/hr, and `main.cpp` publishes it unchanged.
+
+> **Fixed since PP1.** Two separate errors inflated this figure:
+>
+> 1. **Unit double-conversion.** `fsm.h` used to return %/s and `main.cpp`
+>    multiplied by 3600 in two places. The unit change now happens once, in
+>    `updateVelocity()`. There is exactly one `3600` left in the firmware —
+>    the ms→hours divisor in `fsm.h`.
+> 2. **Sensor dropout read as an emptying bin.** `readFillPct()` returns `-1`
+>    when the HC-SR04 median read times out; `readSensors()` used to convert
+>    that to `0`, so a dropout looked like an instant 45% → 0% step and
+>    produced a false `urgency-rate` ALERT. That accounted for 55 of the 113
+>    transmissions in the 12 May run, and the 261,322 %/hr dF/dt recorded there.
+
+**Ultrasonic fault handling.** On a failed read `readSensors()` **holds the last
+good fill value** and increments a fault counter; it never substitutes a
+fabricated value that could trip urgency. Once the counter exceeds
+`FILL_FAULT_HOLD_MAX` (5 consecutive reads) the node logs a warning over serial
+and adds `"sensor_fault": true` to the published payload, so held readings are
+identifiable in the recorded data. The counter and the flag clear on the first
+good read.
 
 ### 5.4 Urgency Conditions
 
@@ -210,8 +250,17 @@ On wake from deep sleep (or brownout-reset) the firmware restores FSM context fr
 
 ```
 fsm.state, fsm.txInterval, fsm.prevFill,
-lastTxFill, txCount, simulatedBattPct
+lastTxFill, txCount, simulatedBattPct,
+fsm.velRefFill, fsm.dFdtHr              ← fill-velocity window (5.3)
 ```
+
+> **`velRefMs` is deliberately not restored.** It is a `millis()` timestamp, and
+> `millis()` restarts at 0 on wake — a restored value would be compared against a
+> smaller "now" and the elapsed subtraction would wrap to roughly 49 days. On
+> restore the window is re-anchored to the current `millis()` and left unprimed,
+> so the first tick after wake re-primes from the live fill reading and reports
+> 0 %/hr. That is the honest answer for a rate that was never measured across
+> the sleep gap.
 
 Wi-Fi reconnects faster using the cached BSSID + channel from the previous association.
 
@@ -258,6 +307,15 @@ When enabled, the node sleeps `min(txInterval, 30 s)` between samples (10 s in A
 }
 ```
 
+| Field | Unit / values | Notes |
+|---|---|---|
+| `ts` | ms | Device `millis()` — **resets on every boot**. Use the backend's `rx_ts` for wall-clock. |
+| `interval` | s | T* that governed the cycle just closed (see 5.2) |
+| `deadband` | % | ΔF* used for this cycle |
+| `dfdt` | **%/hr** | Fill velocity, windowed and clamped (see 5.3) |
+| `reason` | `timer` · `deadband` · `baseline` · `urgency-fill` · `urgency-gas135` · `urgency-gas5` · `urgency-rate` | Which trigger fired |
+| `sensor_fault` | `true` | **Optional** — present only when the HC-SR04 has failed more than `FILL_FAULT_HOLD_MAX` consecutive reads and `fill_pct` is a held value (see 5.3). Absent otherwise. |
+
 ---
 
 ## 7. Backend
@@ -267,15 +325,55 @@ When enabled, the node sleeps `min(txInterval, 30 s)` between samples (10 s in A
 | Endpoint | Method | Description |
 |---|---|---|
 | `/api/readings` | GET | Last N readings from SQLite (`?limit=200`) |
-| `/api/stats` | GET | `{ tx_count_adaptive, tx_count_baseline }` |
+| `/api/stats` | GET | `{ tx_count_adaptive, tx_count_baseline }` — **`COUNT(*)` of stored rows per mode** |
+| `/api/run` | GET | `{ label }` — the current experiment run label |
+| `/api/run` | POST | Body `{ "label": "E1-adaptive" }` — sets the label stamped on every row inserted from then on |
 | `/api/mode/:nodeId` | POST | Publish mode switch to MQTT |
 | `/api/battery` | POST | Publish battery % to MQTT |
 | `/api/reset` | POST | Delete all readings, emit `reset` via Socket.io |
 
 Socket.io events emitted to dashboard:
 
-- `reading` — every inbound MQTT packet (after DB insert)
+- `reading` — every inbound MQTT packet (after DB insert), including `rx_ts` and `run_label`
 - `reset` — after `/api/reset` clears the table
+
+**CORS.** Express and Socket.io both allow origin `http://localhost:5173`
+(`DASHBOARD_ORIGIN` in `server.js`).
+
+> **Fixed since PP1.** Only Socket.io had a CORS config. Every REST call from the
+> dashboard — the initial `/api/readings` and `/api/stats` loads, the mode
+> buttons, the battery slider and Reset Data — was rejected by the browser, and
+> because each of those `fetch`es swallows errors with `.catch(() => {})` it
+> failed silently. Only the Socket.io stream appeared to work.
+
+### Transmission counting
+
+`/api/stats` counts **rows**, one row per transmission.
+
+> **Fixed since PP1.** It used to report `MAX(tx_count)` per mode. `tx_count` is
+> the device's own counter and resets on every mode switch and every reboot, so
+> the totals silently under-reported — and TCR, which is derived from them, was
+> wrong with it. The JSON response keys are unchanged, so the dashboard is
+> unaffected.
+
+### Experiment runs
+
+Evaluation runs are separated by a free-text label rather than by reconstructed
+timestamps:
+
+```bash
+curl -X POST http://localhost:3001/api/run      -H "Content-Type: application/json"      -d '{"label":"E1-adaptive"}'
+```
+
+Every row inserted afterwards carries that `run_label`, so `E1-baseline`,
+`E1-adaptive` and `E2-events` can be queried independently:
+
+```sql
+SELECT mode, COUNT(*) FROM readings WHERE run_label = 'E1-adaptive' GROUP BY mode;
+```
+
+The label lives in memory in the server process, defaults to `""`, and is not
+persisted across a backend restart — set it at the start of each run.
 
 ### Database schema
 
@@ -287,11 +385,24 @@ CREATE TABLE readings (
   gas_135   INTEGER, gas_5    INTEGER, batt_pct REAL,
   state     TEXT,    mode     TEXT,    tx_count INTEGER,
   interval  INTEGER, deadband REAL,    dfdt     REAL,
-  reason    TEXT
+  reason    TEXT,
+  rx_ts     INTEGER,        -- server Date.now() at message receipt
+  run_label TEXT            -- experiment tag, e.g. "E1-adaptive"
 );
 ```
 
-> **Schema change notice:** If `smart-bin.db` exists from an older run, delete it before restarting — SQLite `CREATE TABLE IF NOT EXISTS` will not alter an existing table.
+| Column | Source | Why |
+|---|---|---|
+| `ts` | device `millis()` | Resets on every boot — not usable for experiment windows |
+| `rx_ts` | server `Date.now()` at receipt | Real wall-clock time; use this to slice runs |
+| `run_label` | `POST /api/run` | Separates evaluation runs without reconstructing timestamps |
+
+> **Migration:** on startup the server runs `PRAGMA table_info(readings)` and
+> `ALTER TABLE`s in any of `rx_ts` / `run_label` that are missing. An existing
+> `smart-bin.db` from an older run is upgraded in place, keeping its rows; the
+> old rows simply have `NULL` in the new columns. The migration is idempotent.
+> Deleting the database before a run is now optional, and only worth doing when
+> you want a clean set of rows rather than a clean schema.
 
 ---
 
@@ -301,7 +412,7 @@ CREATE TABLE readings (
 
 | Panel | Description |
 |---|---|
-| **TCR display** | Large TCR %, adaptive TX, baseline TX, TX saved, estimated energy saved (TCR × 0.7) |
+| **TCR display** | Large TCR %, adaptive TX, baseline TX, TX saved, estimated energy saved (TCR × 0.7) — counts are anchored to the server, see below |
 | **Mode control** | Run BASELINE / Run ADAPTIVE / Reset Data buttons |
 | **State badge** | Current FSM state (colour-coded) + last TX reason + dF/dt |
 | **Battery slider** | Simulates battery 0–100%, POSTs to `/api/battery` on change, sends 80% on mount |
@@ -310,6 +421,19 @@ CREATE TABLE readings (
 | **Batt & Temp chart** | Dual line chart |
 | **Gas chart** | MQ-135 and MQ-5 ADC values with alert reference lines (2500 / 3500) |
 | **Risk panel** | MQ warmup status, gateway info, PP2 deployment note |
+
+### TX counting in the dashboard
+
+`GET /api/stats` is the authority. Between reconciliations the panel increments
+its counters locally, one per Socket.io `reading` event — the backend emits that
+only after the row is inserted, so an event is exactly one stored row. It
+reconciles against the server on mount, on a mode switch, and on socket
+reconnect (the only way an event can be missed).
+
+> **Fixed since PP1.** The panel used to *assign* its counters from the payload's
+> `tx_count`. That is the device-side counter, which resets on every mode switch
+> and every reboot, so the on-screen totals — and the TCR derived from them —
+> jumped backwards mid-demo and disagreed with the database.
 
 ---
 
@@ -336,18 +460,29 @@ mosquitto -v
 
 ### 2 — Flash firmware
 
-Edit `firmware/include/config.h`:
+Wi-Fi credentials are a source edit (`firmware/include/config.h`):
 ```c
 #define WIFI_SSID  "your-network"
 #define WIFI_PASS  "your-password"
-#define MQTT_HOST  "your-laptop-lan-ip"
 ```
+
+The broker address is **not** — it's whatever machine is running Mosquitto that
+day, so it's a build-time flag instead (`MQTT_HOST_OVERRIDE`), falling back to
+the `MQTT_HOST` default in `config.h` if omitted. On demo day, find your
+machine's LAN/hotspot IP and pass it via `PLATFORMIO_BUILD_FLAGS` — one line,
+no code edit, safe to run under pressure:
 
 ```bash
 cd firmware
-pio run --target upload
-pio device monitor          # 115200 baud
+PLATFORMIO_BUILD_FLAGS='-DMQTT_HOST_OVERRIDE=\"10.72.205.244\"' \
+  pio run -e esp32dev -t upload --upload-port COM6
+pio device monitor -b 115200 --port COM6
 ```
+
+(`pio run`'s CLI does not accept a bare `-D` flag — `PLATFORMIO_BUILD_FLAGS`
+is the supported override mechanism. On Windows PowerShell, set it first:
+`$env:PLATFORMIO_BUILD_FLAGS = '-DMQTT_HOST_OVERRIDE=\"10.72.205.244\"'`
+then run the `pio run` line without the leading `VAR=value`.)
 
 ### 3 — Start backend
 
@@ -369,8 +504,19 @@ npm run dev                  # http://localhost:5173
 
 ## 11. Demo Procedure
 
-1. Flash firmware → open Serial Monitor → confirm `[RTC] fresh boot` then `[MQ] warmup complete` then `[FSM] started`.
-2. Open dashboard at `http://localhost:5173`.
+1. Flash firmware with the broker IP override (see §10.2) → open Serial Monitor
+   → confirm `[RTC] fresh boot` then `[MQ] warmup complete` then `[FSM] started`.
+   The node reaches `[FSM] started` even if the broker isn't up yet — it waits
+   up to `MQTT_SETUP_TIMEOUT_MS` (30 s) and starts anyway, logging any missed
+   transmission as `[TX-DROPPED]` and reporting the count as `tx_dropped` on
+   the next payload that gets through. A broker restart mid-demo does not end
+   the run: the node reconnects and re-subscribes within `MQTT_RETRY_MS` (5 s).
+2. Open dashboard at `http://localhost:5173`. Tag the run first so the rows can
+   be separated later:
+   ```bash
+   curl -X POST http://localhost:3001/api/run -H "Content-Type: application/json" -d '{"label":"E1-baseline"}'
+   ```
+   Re-POST a new label whenever you start a different run.
 3. **Run BASELINE** — click the button, observe fixed 60 s TX cadence, watch TX count climb.
 4. **Run ADAPTIVE** — click the button, observe FSM-driven intervals and TCR building.
 5. **Trigger ALERT** — cover the HC-SR04 (fill = ~100%) or drag battery slider below 5% to trigger DEAD guard.
@@ -405,9 +551,14 @@ npm run dev                  # http://localhost:5173
 | AIMD AI threshold | batt < 70% | `config.h` |
 | AIMD MD threshold | batt > 80% | `config.h` |
 | Deadband formula | max(1%, 10% − dF/dt × 0.5) | `fsm.h` |
+| dF/dt window (VEL_WINDOW_MS) | 60 s | `config.h` |
+| dF/dt clamp (DFDT_CLAMP) | ± 500 %/hr | `config.h` |
+| Ultrasonic fault hold (FILL_FAULT_HOLD_MAX) | 5 consecutive reads | `config.h` |
 | HC-SR04 filter | Median of 3 | `sensors.h` |
 | BASELINE interval | 60 s fixed | `config.h` |
 | MQ warmup | 5 s | `config.h` |
+| MQTT setup timeout (MQTT_SETUP_TIMEOUT_MS) | 30 s | `config.h` |
+| MQTT retry interval (MQTT_RETRY_MS) | 5 s | `config.h` |
 | Deep sleep | Disabled (live demo) | `config.h` |
 | Backend port | 3001 | `server.js` |
 | Dashboard port | 5173 | `vite.config.js` |

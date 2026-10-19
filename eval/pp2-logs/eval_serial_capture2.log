@@ -1,0 +1,107 @@
+--- Terminal on COM6 | 115200 8-N-1
+--- Available filters and text transformations: debug, default, direct, esp32_exception_decoder, hexlify, log2file, nocontrol, printable, send_on_enter, time
+--- More details at https://bit.ly/pio-monitor-filters
+--- Quit: Ctrl+C | Menu: Ctrl+T | Help: Ctrl+T followed by Ctrl+H
+0x1 (POWERON_RESET),boot:0x17 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0030,len:1184
+load:0x40078000,len:13232
+load:0x40080400,len:3028
+entry 0x400805e4
+[WiFi] no usable cache - scanning
+[WiFi] path=SCAN ssid="Redmi Note 14" assoc_ms=3677 ch=4 rssi=-43 bssid=1A:4D:AD:2B:6B:EC ip=10.72.205.50
+[RTC] fresh boot, initializing
+[MQTT] broker 10.72.205.244:1883, waiting up to 30s
+[MQTT] connecting... ok
+[MQTT] subscribed mode+override+battery: ok
+[MQ] warming up...
+[MQ] warmup 3s remaining
+[MQ] warmup 2s remaining
+[MQ] warmup 1s remaining
+[MQ] warmup 0s remaining
+[MQ] warmup 4294967s remaining
+[MQ] warmup complete
+[FSM] started in ADAPTIVE mode
+[TX] {"node_id":"bin01","ts":12715,"fill_pct":19.19724,"temp_c":29.5,"humidity":79.6,"gas_135":430,"gas_5":0,"batt_pct":80,"state":"STABLE","mode":"ADAPTIVE","tx_count":1,"tx_dropped":0,"interval":300,"deadband":10,"dfdt":0,"reason":"deadband"}
+[FSM] state=STABLE interval=300s deadband=10.0% delta=19.2% reason=deadband
+[TX] {"node_id":"bin01","ts":17521,"fill_pct":0,"temp_c":29.5,"humidity":79.6,"gas_135":434,"gas_5":0,"batt_pct":80,"state":"STABLE","mode":"ADAPTIVE","tx_count":2,"tx_dropped":0,"interval":300,"deadband":10,"dfdt":0,"reason":"deadband"}
+[FSM] state=STABLE interval=300s deadband=10.0% delta=19.2% reason=deadband
+[TX] {"node_id":"bin01","ts":19940,"fill_pct":80.93723,"temp_c":29.6,"humidity":79.9,"gas_135":434,"gas_5":0,"batt_pct":80,"state":"ALERT","mode":"ADAPTIVE","tx_count":3,"tx_dropped":0,"interval":60,"deadband":10,"dfdt":0,"reason":"urgency-fill"}
+[FSM] state=ALERT interval=60s deadband=10.0% delta=80.9% reason=urgency-fill
+[TX] {"node_id":"bin01","ts":21159,"fill_pct":62.83947,"temp_c":29.5,"humidity":80,"gas_135":386,"gas_5":0,"batt_pct":80,"state":"ACTIVE","mode":"ADAPTIVE","tx_count":4,"tx_dropped":0,"interval":300,"deadband":10,"dfdt":0,"reason":"deadband"}
+[FSM] state=ACTIVE interval=300s deadband=10.0% delta=18.1% reason=deadband
+[TX] {"node_id":"bin01","ts":22381,"fill_pct":4.709997,"temp_c":29.5,"humidity":80,"gas_135":417,"gas_5":0,"batt_pct":80,"state":"STABLE","mode":"ADAPTIVE","tx_count":5,"tx_dropped":0,"interval":300,"deadband":10,"dfdt":0,"reason":"deadband"}
+[FSM] state=STABLE interval=300s deadband=10.0% delta=58.1% reason=deadband
+[TX] {"node_id":"bin01","ts":24800,"fill_pct":18.52026,"temp_c":29.5,"humidity":80,"gas_135":465,"gas_5":0,"batt_pct":80,"state":"STABLE","mode":"ADAPTIVE","tx_count":6,"tx_dropped":0,"interval":300,"deadband":10,"dfdt":0,"reason":"deadband"}
+[FSM] state=STABLE interval=300s deadband=10.0% delta=13.8% reason=deadband
+[TX] {"node_id":"bin01","ts":28417,"fill_pct":5.973686,"temp_c":29.5,"humidity":80.4,"gas_135":448,"gas_5":0,"batt_pct":80,"state":"STABLE","mode":"ADAPTIVE","tx_count":7,"tx_dropped":0,"interval":300,"deadband":10,"dfdt":0,"reason":"deadband"}
+[FSM] state=STABLE interval=300s deadband=10.0% delta=12.5% reason=deadband
+[TX] {"node_id":"bin01","ts":29631,"fill_pct":25.4254,"temp_c":29.5,"humidity":80.4,"gas_135":483,"gas_5":0,"batt_pct":80,"state":"STABLE","mode":"ADAPTIVE","tx_count":8,"tx_dropped":0,"interval":300,"deadband":10,"dfdt":0,"reason":"deadband"}
+[FSM] state=STABLE interval=300s deadband=10.0% delta=19.5% reason=deadband
+[TX] {"node_id":"bin01","ts":30854,"fill_pct":15.04514,"temp_c":29.5,"humidity":80.4,"gas_135":487,"gas_5":0,"batt_pct":80,"state":"STABLE","mode":"ADAPTIVE","tx_count":9,"tx_dropped":0,"interval":300,"deadband":10,"dfdt":0,"reason":"deadband"}
+[FSM] state=STABLE interval=300s deadband=10.0% delta=10.4% reason=deadband
+[TX] {"node_id":"bin01","ts":32069,"fill_pct":25.4254,"temp_c":29.5,"humidity":80.4,"gas_135":492,"gas_5":0,"batt_pct":80,"state":"STABLE","mode":"ADAPTIVE","tx_count":10,"tx_dropped":0,"interval":300,"deadband":10,"dfdt":0,"reason":"deadband"}
+[FSM] state=STABLE interval=300s deadband=10.0% delta=10.4% reason=deadband
+[TX] {"node_id":"bin01","ts":35686,"fill_pct":0,"temp_c":29.5,"humidity":80.4,"gas_135":464,"gas_5":0,"batt_pct":80,"state":"STABLE","mode":"ADAPTIVE","tx_count":11,"tx_dropped":0,"interval":300,"deadband":10,"dfdt":0,"reason":"deadband"}
+[FSM] state=STABLE interval=300s deadband=10.0% delta=25.4% reason=deadband
+[TX] {"node_id":"bin01","ts":40507,"fill_pct":42.80106,"temp_c":29.5,"humidity":80.1,"gas_135":449,"gas_5":0,"batt_pct":80,"state":"STABLE","mode":"ADAPTIVE","tx_count":12,"tx_dropped":0,"interval":300,"deadband":10,"dfdt":0,"reason":"deadband"}
+[FSM] state=STABLE interval=300s deadband=10.0% delta=42.8% reason=deadband
+[TX] {"node_id":"bin01","ts":41724,"fill_pct":0,"temp_c":29.5,"humidity":80.1,"gas_135":453,"gas_5":0,"batt_pct":80,"state":"STABLE","mode":"ADAPTIVE","tx_count":13,"tx_dropped":0,"interval":300,"deadband":10,"dfdt":0,"reason":"deadband"}
+[FSM] state=STABLE interval=300s deadband=10.0% delta=42.8% reason=deadband
+Guru Meditation Error: Core  1 panic'ed (Interrupt wdt timeout on CPU1). 
+
+Core  1 register dump:
+PC      : 0x400dba7a  PS      : 0x00060335  A0      : 0x800d9d99  A1      : 0x3ffb1f10  
+A2      : 0x00000004  A3      : 0x00000000  A4      : 0x00000027  A5      : 0x00060b23  
+A6      : 0x00060b20  A7      : 0x00000001  A8      : 0x3ffbdc28  A9      : 0x0000001f  
+A10     : 0x3ff5f07c  A11     : 0x00000010  A12     : 0x00000004  A13     : 0x00060323  
+A14     : 0x00060320  A15     : 0x00000001  SAR     : 0x00000004  EXCCAUSE: 0x00000006  
+EXCVADDR: 0x00000000  LBEG    : 0x40084601  LEND    : 0x40084609  LCOUNT  : 0x00000027  
+
+
+Backtrace: 0x400dba77:0x3ffb1f10 0x400d9d96:0x3ffb1f40 0x400d53fd:0x3ffb1f60 0x400d54e5:0x3ffb1f80 0x400d5575:0x3ffb20e0 0x400d3460:0x3ffb2110 0x400d471a:0x3ffb2140 0x400db1a1:0x3ffb2290
+
+
+Core  0 register dump:
+PC      : 0x40152bc2  PS      : 0x00060a35  A0      : 0x800e3d05  A1      : 0x3ffbc8a0  
+A2      : 0x00000000  A3      : 0x80000001  A4      : 0x8008f1c4  A5      : 0x3ffbc7c0  
+A6      : 0x00000003  A7      : 0x00060023  A8      : 0x800e3902  A9      : 0x3ffbc870  
+A10     : 0x00000000  A11     : 0x80000001  A12     : 0x8008f1c4  A13     : 0x3ffca6c0  
+A14     : 0x00000003  A15     : 0x00060023  SAR     : 0x0000001d  EXCCAUSE: 0x00000006  
+EXCVADDR: 0x00000000  LBEG    : 0x00000000  LEND    : 0x00000000  LCOUNT  : 0x00000000  
+
+
+Backtrace: 0x40152bbf:0x3ffbc8a0 0x400e3d02:0x3ffbc8c0 0x4008d230:0x3ffbc8e0
+
+
+
+
+ELF file SHA256: 906382bc2de6b2f1
+
+Rebooting...
+ets Jul 29 2019 12:21:46
+
+rst:0xc (SW_CPU_RESET),boot:0x17 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0030,len:1184
+load:0x40078000,len:13232
+load:0x40080400,len:3028
+entry 0x400805e4
+[WiFi] no usable cache - scanning
+[WiFi] path=SCAN ssid="Redmi Note 14" assoc_ms=3737 ch=4 rssi=-46 bssid=1A:4D:AD:2B:6B:EC ip=10.72.205.50
+[RTC] fresh boot, initializing
+[MQTT] broker 10.72.205.244:1883, waiting up to 30s
+[MQTT] connecting... ok
+[MQTT] subscribed mode+override+battery: ok
+[MQ] warming up...
+[MQ] warmup 4s remaining
+[MQ] warmup 2s remaining
+[MQ] warmup 1s remaining
+[MQ] warmup 0s remaining
+[MQ] warmup 4294967s remaining
+[MQ] warmup complete
+[FSM] started in ADAPTIVE mode

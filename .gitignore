@@ -1,0 +1,15 @@
+# Dependencies and build output (rebuilt with npm install / pio run / npm run build)
+node_modules/
+.pio/
+firmware/.pio/
+firmware-bin02/.pio/
+dashboard/dist/
+
+# Databases: the live DB exists only on the EDGE laptop. Never commit one.
+*.db
+*.db-wal
+*.db-shm
+
+# Wi-Fi credentials (templates: include/secrets.example.h)
+firmware/include/secrets.h
+firmware-bin02/include/secrets.h

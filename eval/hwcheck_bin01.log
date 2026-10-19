@@ -1,0 +1,85 @@
+[  0.005] ets Jul 29 2019 12:21:46
+[  0.008] 
+[  0.011] rst:0x1 (POWERON_RESET),boot:0x17 (SPI_FAST_FLASH_BOOT)
+[  0.014] configsip: 0, SPIWP:0xee
+[  0.018] clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+[  0.021] mode:DIO, clock div:2
+[  0.024] load:0x3fff0030,len:1184
+[  0.028] load:0x40078000,len:13232
+[  0.030] load:0x40080400,len:3028
+[  0.037] entry 0x400805e4
+[  0.405] [POWER] boot session=ab54f4d6; live-connected 10 Hz integration
+[  0.410] [INA219] online at 0x40; R100 / 32V-2A calibration
+[  0.508] [WiFi] no usable cache - scanning
+[  4.060] [WiFi] path=SCAN ssid="Smart-Network " assoc_ms=3543 ch=1 rssi=-45 bssid=5C:E8:83:6C:37:50 ip=192.168.1.25
+[  4.063] [RTC] fresh boot, initializing
+[  4.068] [BUILD] INA219 + MQ5 removed; MQTT buffer=1024; bounded DHT
+[  4.071] [MQTT] broker 10.72.205.244:1883, waiting up to 30s
+[  7.077] [MQTT] connecting... failed rc=-2
+[ 15.106] [MQTT] connecting... failed rc=-2
+[ 23.134] [MQTT] connecting... failed rc=-2
+[ 31.161] [MQTT] connecting... failed rc=-2
+[ 39.189] [MQTT] connecting... failed rc=-2
+[ 39.198] [MQTT] no broker after 30s - starting anyway; the FSM runs and transmissions are logged as [TX-DROPPED]
+[ 39.199] [MQ] warming up...
+[ 40.200] [MQ] warmup 3s remaining
+[ 41.201] [MQ] warmup 2s remaining
+[ 42.201] [MQ] warmup 1s remaining
+[ 43.201] [MQ] warmup 0s remaining
+[ 44.221] [MQ] warmup 0s remaining
+[ 44.224] [MQ] warmup complete
+[ 44.226] [FSM] started in ADAPTIVE mode
+[ 47.226] [MQTT] connecting... failed rc=-2
+[ 47.431] [TX-DROPPED] reason=urgent-transition dropped=1 rc=-2 (txCount held at 0)
+[ 52.663] [MQTT] connecting... failed rc=-2
+[ 58.097] [MQTT] connecting... failed rc=-2
+[ 63.531] [MQTT] connecting... failed rc=-2
+[ 68.964] [MQTT] connecting... failed rc=-2
+[ 74.398] [MQTT] connecting... failed rc=-2
+[ 79.832] ���������������������������������������������������������������� failed rc=-2
+[ 85.266] [MQTT] connecting... failed rc=-2
+[ 90.700] [MQTT] connecting... failed rc=-2
+[ 96.142] [MQTT] connecting... failed rc=-2
+[101.579] [MQTT] connecting... failed rc=-2
+[107.018] [MQTT] connecting... failed rc=-2
+[112.456] [MQTT] connecting... failed rc=-2
+[117.896] [MQTT] connecting... failed rc=-2
+[123.334] [MQTT] connecting... failed rc=-2
+[128.774] [MQTT] connecting... failed rc=-2
+[134.212] [MQTT] connecting... failed rc=-2
+[139.649] [MQTT] connecting... failed rc=-2
+[145.082] [MQTT] connecting... failed rc=-2
+[150.516] [MQTT] connecting... failed rc=-2
+[155.949] [MQTT] connecting... failed rc=-2
+[161.383] [MQTT] connecting... failed rc=-2
+[166.817] [MQTT] connecting... failed rc=-2
+[172.252] [MQTT] connecting... failed rc=-2
+[172.455] [TX-DROPPED] reason=urgent-transition dropped=2 rc=-2 (txCount held at 0)
+[183.118] [MQTT] connecting...����������������������������������������������������������������[MQTT] connecting... failed rc=-2
+[188.553] [MQTT] connecting... failed rc=-2
+[193.990] [MQTT] connecting... failed rc=-2
+[199.423] [MQTT] connecting... failed rc=-2
+[204.859] [MQTT] connecting... failed rc=-2
+[210.291] [MQTT] connecting... failed rc=-2
+[215.725] [MQTT] connecting... failed rc=-2
+[221.159] [MQTT] connecting... failed rc=-2
+[226.593] [MQTT] connecting... failed rc=-2
+[232.027] [MQTT] connecting... failed rc=-2
+[237.461] [MQTT] connecting... failed rc=-2
+[242.895] [MQTT] connecting... failed rc=-2
+[248.329] [MQTT] connecting... failed rc=-2
+[253.763] [MQTT] connecting... failed rc=-2
+[259.196] [MQTT] connecting... failed rc=-2
+[264.631] [MQTT] connecting... failed rc=-2
+[270.066] [MQTT] connecting... failed rc=-2
+[275.501] [MQTT] connecting... failed rc=-2
+[280.935] [MQTT] connecting... failed rc=-2
+[286.369] [MQTT] connecting... failed rc=-2
+[291.803] [MQTT] connecting... failed rc=-2
+[297.238] [MQTT] connecting... failed rc=-2
+[302.671] [MQTT] connecting... failed rc=-2
+[308.105] [MQTT] connecting... failed rc=-2
+[313.539] [MQTT] connecting... failed rc=-2
+[318.975] [MQTT] connecting... failed rc=-2
+[324.409] [MQTT] connecting... failed rc=-2
+[329.844] [MQTT] connecting... failed rc=-2

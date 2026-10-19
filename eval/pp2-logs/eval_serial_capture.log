@@ -1,0 +1,73 @@
+--- Terminal on COM6 | 115200 8-N-1
+--- Available filters and text transformations: debug, default, direct, esp32_exception_decoder, hexlify, log2file, nocontrol, printable, send_on_enter, time
+--- More details at https://bit.ly/pio-monitor-filters
+--- Quit: Ctrl+C | Menu: Ctrl+T | Help: Ctrl+T followed by Ctrl+H
+_RESET),boot:0x17 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0030,len:1184
+load:0x40078000,len:13232
+load:0x40080400,len:3028
+entry 0x400805e4
+[WiFi] no usable cache - scanning
+[  2742][E][WiFiMulti.cpp:191] run(): [WIFI] no matching wifi found!
+[WiFi] no known AP after 2603 ms - retrying scan
+[  5845][E][WiFiMulti.cpp:191] run(): [WIFI] no matching wifi found!
+[WiFi] no known AP after 5706 ms - retrying scan
+[  8948][E][WiFiMulti.cpp:191] run(): [WIFI] no matching wifi found!
+[WiFi] no known AP after 8809 ms - retrying scan
+[ 12051][E][WiFiMulti.cpp:191] run(): [WIFI] no matching wifi found!
+[WiFi] no known AP after 11912 ms - retrying scan
+[ 15153][E][WiFiMulti.cpp:191] run(): [WIFI] no matching wifi found!
+[WiFi] no known AP after 15015 ms - retrying scan
+[ 18256][E][WiFiMulti.cpp:191] run(): [WIFI] no matching wifi found!
+[WiFi] no known AP after 18117 ms - retrying scan
+[ 21359][E][WiFiMulti.cpp:191] run(): [WIFI] no matching wifi found!
+[WiFi] no known AP after 21220 ms - retrying scan
+[ 24461][E][WiFiMulti.cpp:191] run(): [WIFI] no matching wifi found!
+[WiFi] no known AP after 24322 ms - retrying scan
+[ 27563][E][WiFiMulti.cpp:191] run(): [WIFI] no matching wifi found!
+[WiFi] no known AP after 27424 ms - retrying scan
+[ 30666][E][WiFiMulti.cpp:191] run(): [WIFI] no matching wifi found!
+[WiFi] no known AP after 30527 ms - retrying scan
+[ 33768][E][WiFiMulti.cpp:191] run(): [WIFI] no matching wifi found!
+[WiFi] no known AP after 33630 ms - retrying scan
+[ 36870][E][WiFiMulti.cpp:191] run(): [WIFI] no matching wifi found!
+[WiFi] no known AP after 36732 ms - retrying scan
+[ 39972][E][WiFiMulti.cpp:191] run(): [WIFI] no matching wifi found!
+[WiFi] no known AP after 39834 ms - retrying scan
+[ 42874][E][WiFiMulti.cpp:191] run(): [WIFI] no matching wifi found!
+[WiFi] no known AP after 42735 ms - retrying scan
+[ 45776][E][WiFiMulti.cpp:191] run(): [WIFI] no matching wifi found!
+[WiFi] no known AP after 45638 ms - retrying scan
+[ 48878][E][WiFiMulti.cpp:191] run(): [WIFI] no matching wifi found!
+[WiFi] no known AP after 48740 ms - retrying scan
+[ 51980][E][WiFiMulti.cpp:191] run(): [WIFI] no matching wifi found!
+[WiFi] no known AP after 51841 ms - retrying scan
+[ 55083][E][WiFiMulti.cpp:191] run(): [WIFI] no matching wifi found!
+[WiFi] no known AP after 54944 ms - retrying scan
+[ 57984][E][WiFiMulti.cpp:191] run(): [WIFI] no matching wifi found!
+[WiFi] no known AP after 57845 ms - retrying scan
+[ 61087][E][WiFiMulti.cpp:191] run(): [WIFI] no matching wifi found!
+[WiFi] no known AP after 60948 ms - retrying scan
+[ 64188][E][WiFiMulti.cpp:191] run(): [WIFI] no matching wifi found!
+[WiFi] no known AP after 64050 ms - retrying scan
+[ 67291][E][WiFiMulti.cpp:191] run(): [WIFI] no matching wifi found!
+[WiFi] no known AP after 67152 ms - retrying scan
+[ 70394][E][WiFiMulti.cpp:191] run(): [WIFI] no matching wifi found!
+[WiFi] no known AP after 70255 ms - retrying scan
+[ 73295][E][WiFiMulti.cpp:191] run(): [WIFI] no matching wifi found!
+[WiFi] no known AP after 73156 ms - retrying scan
+[ 76398][E][WiFiMulti.cpp:191] run(): [WIFI] no matching wifi found!
+[WiFi] no known AP after 76259 ms - retrying scan
+[ 79500][E][WiFiMulti.cpp:191] run(): [WIFI] no matching wifi found!
+[WiFi] no known AP after 79361 ms - retrying scan
+[ 82603][E][WiFiMulti.cpp:191] run(): [WIFI] no matching wifi found!
+[WiFi] no known AP after 82464 ms - retrying scan
+[ 85705][E][WiFiMulti.cpp:191] run(): [WIFI] no matching wifi found!
+[WiFi] no known AP after 85566 ms - retrying scan
+[ 88606][E][WiFiMulti.cpp:191] run(): [WIFI] no matching wifi found!
+[WiFi] no known AP after 88467 ms - retrying scan
+[ 91508][E][WiFiMulti.cpp:191] run(): [WIFI] no matching wifi found!
+[WiFi] no known AP after 91369 ms - retrying scan
