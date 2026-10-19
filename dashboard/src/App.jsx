@@ -2,7 +2,10 @@ import {useEffect, useMemo, useState} from 'react'
 import {io} from 'socket.io-client'
 import {LineChart,Line,XAxis,YAxis,Tooltip,ResponsiveContainer,ReferenceLine,Legend} from 'recharts'
 
-const BACKEND = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3002'
+// Served by the backend (http://192.168.1.3:3002): same origin. On the Vite dev
+// server (port 5173) the backend is on the same host at :3002.
+const BACKEND = import.meta.env.VITE_BACKEND_URL ||
+  (window.location.port === '5173' ? `${window.location.protocol}//${window.location.hostname}:3002` : window.location.origin)
 
 const number = (value,digits=1) => value === null || value === undefined || !Number.isFinite(Number(value)) ? '—' : Number(value).toFixed(digits)
 const time = value => value ? new Date(value).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'}) : '—'

@@ -1,6 +1,9 @@
 import express from 'express';
 import {createServer} from 'node:http';
 import {randomUUID} from 'node:crypto';
+import {existsSync} from 'node:fs';
+import {dirname, join} from 'node:path';
+import {fileURLToPath} from 'node:url';
 import {Server as IO} from 'socket.io';
 import mqtt from 'mqtt';
 import cors from 'cors';
@@ -12,7 +15,13 @@ const PORT = Number(process.env.PORT || 3002);
 const MQTT_URL = process.env.MQTT_URL || 'mqtt://localhost:1883';
 const TOPIC_ROOT = process.env.TOPIC_ROOT || 'bin';
 if (!/^[A-Za-z0-9_-]+$/.test(TOPIC_ROOT)) throw Error('Unsafe topic root');
-const DASHBOARD_ORIGIN = process.env.DASHBOARD_ORIGIN || 'http://localhost:5173';
+// Cross-origin callers only (the Vite dev server). The built dashboard is served
+// by this server below, so it is same-origin and needs no entry here.
+const DASHBOARD_ORIGIN = (process.env.DASHBOARD_ORIGIN || 'http://localhost:5173')
+  .split(',').map(origin=>origin.trim()).filter(Boolean);
+// 0.0.0.0 so the presentation laptop and phones on Smart-Network can reach it.
+const BIND_HOST = process.env.BIND_HOST || '0.0.0.0';
+const DASHBOARD_DIST = join(dirname(fileURLToPath(import.meta.url)), '..', 'dashboard', 'dist');
 const db = new Database(process.env.DB_PATH || 'smart-bin-gateway.db');
 db.pragma('journal_mode = WAL');
 const fields = {
@@ -246,8 +255,16 @@ app.post('/api/run',(req,res)=>{
 });
 // Destructive reset is deliberately unavailable during research evidence collection.
 app.post('/api/reset',(_,res)=>res.status(409).json({error:'Evidence preservation: start a new run label instead of deleting readings'}));
+app.use('/api',(_,res)=>res.status(404).json({error:'Unknown API route'}));
+// The built dashboard (npm run build in dashboard/), same origin as the API.
+if (existsSync(join(DASHBOARD_DIST,'index.html'))) {
+  app.use(express.static(DASHBOARD_DIST));
+  app.get(/^\/(?!api\/|socket\.io\/).*/,(_,res)=>res.sendFile(join(DASHBOARD_DIST,'index.html')));
+} else {
+  console.warn(`[server] ${DASHBOARD_DIST} not built; run npm run build in dashboard/ to serve the UI here`);
+}
 const broadcast=setInterval(()=>io.emit('gateway',snapshot()),2000);
-httpServer.listen(PORT,'127.0.0.1',()=>console.log(`[server] http://localhost:${PORT}; MQTT=${TOPIC_ROOT}; local UI only`));
+httpServer.listen(PORT,BIND_HOST,()=>console.log(`[server] http://${BIND_HOST}:${PORT}; MQTT=${TOPIC_ROOT}; dashboard ${existsSync(DASHBOARD_DIST)?'served at /':'not built'}; CORS ${DASHBOARD_ORIGIN.join(', ')}`));
 for(const signal of ['SIGINT','SIGTERM']) process.on(signal,()=>{
   clearInterval(broadcast);clearInterval(networkTimer);mqttClient.end(true);io.close();httpServer.close();db.close();process.exit(0);
 });
