@@ -6,7 +6,7 @@ Four PNGs at 1600x900, sized and weighted to be read from the back of a room.
 Run analyze.py first.
 
   python eval/figures.py --metrics eval/out/metrics.json --db backend/smart-bin.db \
-                         --out-dir eval/out
+                         --out-dir eval/out [--node bin01]
 """
 
 import argparse
@@ -167,11 +167,13 @@ def fig_reasons(m, out):
 # ---------------------------------------------------------------------------
 # fig 3 -- T* over time. The figure the May dataset could not produce.
 # ---------------------------------------------------------------------------
-def fig_interval(m, out, db, label):
+def fig_interval(m, out, db, label, node):
+    # Run labels are shared by every node, so the node filter is required.
     con = sqlite3.connect(db)
     df = pd.read_sql_query(
         "SELECT rx_ts, interval, state, batt_pct FROM readings "
-        "WHERE run_label=? AND mode='ADAPTIVE' ORDER BY rx_ts", con, params=(label,))
+        "WHERE run_label=? AND node_id=? AND mode='ADAPTIVE' ORDER BY rx_ts",
+        con, params=(label, node))
     con.close()
 
     fig = plt.figure(figsize=FIGSIZE)
@@ -268,15 +270,21 @@ def main():
     p.add_argument("--metrics", default="eval/out/metrics.json")
     p.add_argument("--db", default="backend/smart-bin.db")
     p.add_argument("--out-dir", default="eval/out")
+    p.add_argument("--node", default=None,
+                   help="node_id for the T* timeline; defaults to the node in metrics.json, else bin01")
     a = p.parse_args()
 
     with open(a.metrics) as f:
         m = json.load(f)
+    node = a.node or m.get("node") or "bin01"
+    if m.get("node") and node != m["node"]:
+        print(f"WARNING: --node {node} differs from metrics.json node {m['node']}; "
+              "figures 1, 2 and 4 still show the metrics.json node")
     os.makedirs(a.out_dir, exist_ok=True)
 
     fig_tx(m, a.out_dir)
     fig_reasons(m, a.out_dir)
-    fig_interval(m, a.out_dir, a.db, m["labels"]["adaptive"])
+    fig_interval(m, a.out_dir, a.db, m["labels"]["adaptive"], node)
     fig_blef(m, a.out_dir)
     print("done", datetime.now().strftime("%H:%M:%S"))
 

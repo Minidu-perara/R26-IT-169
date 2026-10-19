@@ -9,8 +9,12 @@ python eval/figures.py                       # figures  -> eval/out/fig1..4.png
 ```
 
 Defaults assume `backend/smart-bin.db` with run labels `E1-baseline` and
-`E1-adaptive`. Override with `--db`, `--baseline-label`, `--adaptive-label`,
-`--events`, `--out-dir`.
+`E1-adaptive`. Override with `--db`, `--node`, `--baseline-label`,
+`--adaptive-label`, `--events`, `--event-slack-s`, `--out-dir`.
+
+Every metric is for one node: `--node` (default `bin01`). The backend stamps the
+same run label on every node's rows, so the scripts never mix nodes.
+`figures.py` takes the node from `metrics.json` (or `--node`).
 
 Requires `pandas` and `matplotlib`.
 
@@ -23,10 +27,25 @@ Produces TCR and the T* timeline.
 
 **E2 — supervised events.** Ground truth for Alert Recall. Move the target to
 known distances at times you write down in `eval/events.csv`
-(`iso_time,event_type,note`). Fill percentage from distance:
+(`iso_time,event_type,note`; `event_type` is `alert` for 8 cm, `active` for
+15 cm, `clear` for target removed, plus `baseline-start`, `baseline-end`,
+`adaptive-start`, `adaptive-end` for the phase windows; only `alert` rows count
+toward recall; times without an offset are this PC's local time). Edit the file
+in a text editor, not Excel, and keep commas out of the notes. Log the four
+phase-window rows: without them the phase length falls back to the first and
+last row, which is too short for a sparse ADAPTIVE phase and distorts TCR.
+Fill percentage from distance:
 `fill = (40 - d_cm) / 38 × 100`. So 8 cm ≈ 84% (ALERT), 15 cm ≈ 66% (ACTIVE),
-25 cm ≈ 39% (STABLE). Space events at least 90 s apart so the 60 s velocity
-window can close between them.
+25 cm ≈ 39% (STABLE). Over the empty bin the sensor must read a little more
+than 40 cm (about 42 cm): a reading just under 40 cm turns echo jitter into a
+fill-rate ALERT. Hold 8 cm for at least 75 s (BASELINE reports every ~61 s),
+write the time down just after placing the target, keep events at least 2 min
+from the phase edges and at least 125 s apart (a step's fill rate is held until
+the second velocity-window closure, up to ~122 s).
+
+A sudden step is also a fast fill rate. Placing a target at 15 cm shows ACTIVE
+within a second, then a fill-rate ALERT 0-61 s later for about 61 s, then
+ACTIVE again. 8 cm goes straight to ALERT (fill >= 80 %).
 
 **E3 — gateway footprint.** Sample mosquitto and node CPU/RSS during a run into
 `eval/footprint.csv`. Supports the claim that the gateway tier fits Pi-class
@@ -41,14 +60,33 @@ transmission has `reason = "timer"`, the run measured the AoI floor and AIMD onl
 the deadband and urgency paths were never exercised and E2 is required before
 claiming them.
 
-**Alert Recall** is measured only when `events.csv` holds real logged times. An
-event counts as recalled if an `urgency-*` transmission lands within 60 s
-(`AoI_ALERT`). The script reports false positives separately, because 100% recall
-with a pile of false positives is not a good result and must not be reported as
-one.
+**Alert Recall** is measured only when `events.csv` holds real logged times. In
+ADAPTIVE, an `alert` event counts as recalled if a row in state `ALERT` lands
+within 60 s (`AoI_ALERT`), whatever trigger carried it (current firmware labels
+the entry `urgent-transition`; older firmware used `urgency-*`). In BASELINE the
+FSM does not run, so the test is a row reporting fill >= 80 % within 60 s. The
+window opens `--event-slack-s` (30 s) before the logged time to allow for
+logging lag.
+
+**False alerts** are counted separately, because 100% recall with a pile of
+false alerts is not a good result. Every ADAPTIVE `ALERT` row is classified by
+cause: fill >= 80 %, gas above threshold, or fill rate. A fill-rate ALERT is
+real when the row's own dF/dt shows a rise of at least 5 % in one ~61 s
+velocity window (about 295 %/hr; a deliberate step to 15 cm or 8 cm hits the
+500 %/hr clamp), and false when it does not (HC-SR04 jitter of one echo step is
+about 51 %/hr, which still trips the 10 %/hr rule). An episode is false when the
+row that raised it is false. Fill-rate ALERTs after a real rise that was not
+logged are listed for checking.
+
+**Measured power** comes from the node's INA219 on the 5 V input: the 10 Hz
+energy counter, differenced within each boot session, gives mWh and mean mW
+and mA per phase. Rows that fail the backend's power-path check (4.5-5.5 V,
+more than 1 mA) are excluded and counted.
 
 **BLEF is modelled, not measured.** `DEEP_SLEEP_ENABLED` is 0 during the demo and
-there is no current-measurement hardware, so battery life is never observed. The
+no battery is discharged in the runs, so battery life is never observed (the
+INA219 measures power, which with deep sleep off is dominated by the MCU, radio
+and heater). The
 figure comes from a duty-cycle model driven by the measured transmission rate,
 with every assumption in `ENERGY_MODEL` at the top of `analyze.py`. It is reported
 as a range across the assumed transmission window because that window is the

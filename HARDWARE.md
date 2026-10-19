@@ -57,7 +57,7 @@ Pin map (node02 `include/config.h`):
 
 None of these is a boot-strapping pin (GPIO 0, 2, 15). INA219 sits on the 5 V USB input.
 
-Measured 17 Oct 2026 (probe, 60 s, Wi-Fi off): 5.01 V, 29–30 mA; DHT22 29.9 °C, 79.8 %RH with no failed reads; HC-SR04 median 9–10 cm, 0/10 timeouts. Production rows with Wi-Fi: 5.04–5.10 V, 23–74 mA.
+Measured 17 Oct 2026 (probe, 60 s, Wi-Fi off): 5.01 V, 29–30 mA; DHT22 29.9 °C, 79.8 %RH; HC-SR04 10-ping medians mostly 9–12 cm, but some cycles read 50.7, 50.1, 31.5 and 24.9 cm with 0/10 timeouts (`hwprobe_bin02.log` lines 51, 87, 107, 147), so the target was not always in the beam. Production rows with Wi-Fi: 5.04–5.10 V, 23–74 mA.
 
 ## Network and flashing
 
@@ -70,12 +70,12 @@ Measured 17 Oct 2026 (probe, 60 s, Wi-Fi off): 5.01 V, 29–30 mA; DHT22 29.9 °
 
 ## Known issues
 
-1. **bin02 fill reads unstable.** Production rows show 12 % → 0 % → 33 % within 30 s while the probe saw a steady ~9–10 cm. A literal 0 % may mean a failed ping is being substituted. Not investigated.
+1. **bin02 fill reads unstable: real echoes, not a substituted 0.** Production rows show 12 % → 0 % → 33 % within 30 s. Checked 20 Oct: the 0 % rows are valid echoes from 40 cm or further (the room behind the bench, about 50 cm), which `readFillPct()` clamps to 0 %. A failed ping does not produce 0 %: `firmware-bin02` holds the last good value (null before the first valid echo) and sets `sensor_fault` after 5 consecutive faults, like bin01. Evidence: `hwcheck_bin02_prod2.log` lines 11–12 (the 0 % packet was sent as a deadband change of 12.2 % from the held 12.25 %); on 17 Oct, 123 of 311 bin02 rows read 0 % and none was null or flagged `sensor_fault`; the probe also saw 50 cm medians (see above). Fix: keep the target squarely in the beam, and over an empty bin make the sensor read a little more than 40 cm (about 42 cm). Any reading below 40 cm is fill, and a 0.3 cm jitter there is about 0.8 % in one minute, which is above the 10 %/hr fill-rate ALERT threshold.
 2. **bin01 DHT22** dropped 2 of 8 reads in the probe. Check the data-line pull-up and connections.
 3. **bin01 HC-SR04 and bin02 HC-SR04** read about 10 cm, so the bin is not at the empty 40 cm reference during these checks.
 4. **bin02 MQTT** failed with `rc=-2` on the first production flash and connected on the second flash. Cause not found. TCP to 192.168.1.3:1883 opened in 5–23 ms from the same board.
 5. **bin01 MQ-135** raw is about 460, below the ~575 idle figure in `config.h`. Warm-up and ambient conditions differ. Not a fault.
 6. ~~bin02 firmware lives outside this repo.~~ Fixed 19 Oct: it is now in `firmware-bin02/`.
-7. **bin02 `timer` transmissions** appeared about every 62 s while the broker was down, not the 300 s STABLE interval. Not investigated.
+7. **bin02 `timer` transmissions about every 62 s: explained, not a fault.** The 9–10 cm target is about 79–82 % fill, on the 80 % ALERT threshold, so bin02 entered ALERT on its first tick (`hwcheck_bin02.log`: the first attempt at 41.8 s was `urgent-transition`, the next `timer` at 102.5 s). ALERT reports every 60 s (`AoI_ALERT`); one loop pass adds the extra 1–2 s. With the bin empty it would use the STABLE timer.
 8. **Active run label** is still `pp2-live-20260901`, so new rows carry it. Set a new label with `POST /api/run` before an evaluation run.
 9. DB backup before the sqlite upgrade: `backend/_db_backup_20261017/`.
