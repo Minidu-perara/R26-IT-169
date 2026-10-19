@@ -63,7 +63,14 @@
 #define NODE_SENSOR_PROFILE "fill_dht_mq135_ina219"
 
 // ── HC-SR04 ───────────────────────────────────────────────────────────────
-#define BIN_DEPTH_CM    40.0f   // empty bin = sensor to bin floor distance
+// Per node: the distance at which fill reads 0 %. Set it 1.5-2 cm SHORTER than
+// the measured empty-bin distance, so echo jitter at empty clamps to 0 %
+// instead of reading as fill and tripping the 10 %/hr fill-rate ALERT.
+// bin01, 20 Oct 2026: empty bin reads 15.8-16.8 cm (eval/hwcheck_bin01_20oct_empty.log),
+// so 15.8 - 1.8 = 14.0 cm. Override at build time with -DBIN_DEPTH_CM=...
+#ifndef BIN_DEPTH_CM
+#define BIN_DEPTH_CM    14.0f
+#endif
 #define FILL_MAX_CM     2.0f    // full = sensor reads this close to lid
 
 // ── FSM thresholds ────────────────────────────────────────────────────────

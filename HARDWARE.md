@@ -3,7 +3,9 @@
 Verified 17 Oct 2026 by serial capture, probe sketches (`tools/hw_probe/`) and the live backend.
 Logs are in `eval/` (`hwcheck_bin01.log`, `hwprobe_bin01.log`, `hwcheck_bin02*.log`, `hwprobe_bin02.log`, `hwtcp_bin02.log`).
 
-No solar panel or battery is fitted. Battery % is simulated over MQTT (`bin/{node_id}/battery`). Both nodes run from USB 5 V.
+No solar panel is fitted. Battery % is simulated over MQTT (`bin/{node_id}/battery`). Since 20 Oct each node runs from a power bank, and the INA219 sits on the power bank's supply path. Laptop USB power (flashing, serial) bypasses the INA219, so it reads about 0 mA then: run every evaluation on the power bank with USB unplugged.
+
+Bin depth is per node (`BIN_DEPTH_CM` in each `include/config.h`): set it 1.5–2 cm shorter than the measured empty-bin distance, so echo jitter at empty clamps to 0 % instead of tripping the 10 %/hr fill-rate ALERT. Fill = (BIN_DEPTH_CM − d) / (BIN_DEPTH_CM − 2) × 100.
 
 ## bin01
 
@@ -11,9 +13,10 @@ No solar panel or battery is fitted. Battery % is simulated over MQTT (`bin/{nod
 |---|---|
 | Board / chip | ESP32 dev board, ESP32-D0WD-V3 rev v3.1, 4 MB flash |
 | MAC | 1c:c3:ab:fa:42:6c |
-| USB bridge | CP2102 (CP210x), VID:PID 10C4:EA60, adapter serial 0001, **COM6** when plugged in alone |
+| USB bridge | CP2102 (CP210x), VID:PID 10C4:EA60, adapter serial 0001, **COM3** on the DEV laptop (COM6 on the old laptop) |
 | Firmware | `smart-bin-pp1/firmware/` (`[env:esp32dev]`, `NODE_ID "bin01"`) |
 | Sensor profile | `fill_dht_mq135_ina219` |
+| Bin depth | `BIN_DEPTH_CM 14.0` (empty bin reads 15.8–16.8 cm, 20 Oct). 60 % = 6.8 cm, 80 % = 4.4 cm; demo targets 5.5 cm (71 %, ACTIVE) and 3.0 cm (92 %, ALERT) |
 
 Pin map (`firmware/include/config.h`):
 
@@ -25,7 +28,9 @@ Pin map (`firmware/include/config.h`):
 | MQ-5 | GPIO 35, **removed** (`ENABLE_MQ5 0`) |
 | INA219 | I²C SDA 21, SCL 22, address 0x40 |
 
-INA219 sits on the 5 V USB input (R100 shunt, 32 V / 2 A calibration). Current therefore includes the ESP32, Wi-Fi radio and the MQ-135 heater.
+INA219 sits on the power bank's 5 V supply path (R100 shunt, 32 V / 2 A calibration). Current therefore includes the ESP32, Wi-Fi radio and the MQ-135 heater. On laptop USB power it is bypassed and reads about 0 mA (20 Oct: 4.24 V, −0.3 to 0.1 mA).
+
+Measured 20 Oct 2026, reassembled, on laptop USB (probe sketch, 35 s, `eval/hwcheck_bin01_20oct_empty.log`; full check in `eval/hwcheck_bin01_20oct.log`): HC-SR04 over the empty bin 15.8–16.8 cm with 0/10 timeouts; DHT22 31.1 °C, 76.4 %RH; MQ-135 raw 1088–1113; INA219 found at 0x40.
 
 Measured 17 Oct 2026 (probe, 60 s):
 
@@ -70,7 +75,7 @@ Measured 17 Oct 2026 (probe, 60 s, Wi-Fi off): 5.01 V, 29–30 mA; DHT22 29.9 °
 
 ## Known issues
 
-1. **bin02 fill reads unstable: real echoes, not a substituted 0.** Production rows show 12 % → 0 % → 33 % within 30 s. Checked 20 Oct: the 0 % rows are valid echoes from 40 cm or further (the room behind the bench, about 50 cm), which `readFillPct()` clamps to 0 %. A failed ping does not produce 0 %: `firmware-bin02` holds the last good value (null before the first valid echo) and sets `sensor_fault` after 5 consecutive faults, like bin01. Evidence: `hwcheck_bin02_prod2.log` lines 11–12 (the 0 % packet was sent as a deadband change of 12.2 % from the held 12.25 %); on 17 Oct, 123 of 311 bin02 rows read 0 % and none was null or flagged `sensor_fault`; the probe also saw 50 cm medians (see above). Fix: keep the target squarely in the beam, and over an empty bin make the sensor read a little more than 40 cm (about 42 cm). Any reading below 40 cm is fill, and a 0.3 cm jitter there is about 0.8 % in one minute, which is above the 10 %/hr fill-rate ALERT threshold.
+1. **bin02 fill reads unstable: real echoes, not a substituted 0.** Production rows show 12 % → 0 % → 33 % within 30 s. Checked 20 Oct: the 0 % rows are valid echoes from 40 cm or further (the room behind the bench, about 50 cm), which `readFillPct()` clamps to 0 %. A failed ping does not produce 0 %: `firmware-bin02` holds the last good value (null before the first valid echo) and sets `sensor_fault` after 5 consecutive faults, like bin01. Evidence: `hwcheck_bin02_prod2.log` lines 11–12 (the 0 % packet was sent as a deadband change of 12.2 % from the held 12.25 %); on 17 Oct, 123 of 311 bin02 rows read 0 % and none was null or flagged `sensor_fault`; the probe also saw 50 cm medians (see above). Fix: keep the target squarely in the beam, and set `BIN_DEPTH_CM` 1.5–2 cm shorter than the measured empty distance (see the top of this file). Any reading shorter than the depth is fill, and even a 0.3 cm jitter there is a fill rate far above the 10 %/hr ALERT threshold.
 2. **bin01 DHT22** dropped 2 of 8 reads in the probe. Check the data-line pull-up and connections.
 3. **bin01 HC-SR04 and bin02 HC-SR04** read about 10 cm, so the bin is not at the empty 40 cm reference during these checks.
 4. **bin02 MQTT** failed with `rc=-2` on the first production flash and connected on the second flash. Cause not found. TCP to 192.168.1.3:1883 opened in 5–23 ms from the same board.

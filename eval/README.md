@@ -27,25 +27,27 @@ Produces TCR and the T* timeline.
 
 **E2 — supervised events.** Ground truth for Alert Recall. Move the target to
 known distances at times you write down in `eval/events.csv`
-(`iso_time,event_type,note`; `event_type` is `alert` for 8 cm, `active` for
-15 cm, `clear` for target removed, plus `baseline-start`, `baseline-end`,
+(`iso_time,event_type,note`; `event_type` is `alert` for the ALERT target,
+`active` for the ACTIVE target, `clear` for target removed, plus `baseline-start`, `baseline-end`,
 `adaptive-start`, `adaptive-end` for the phase windows; only `alert` rows count
 toward recall; times without an offset are this PC's local time). Edit the file
 in a text editor, not Excel, and keep commas out of the notes. Log the four
 phase-window rows: without them the phase length falls back to the first and
 last row, which is too short for a sparse ADAPTIVE phase and distorts TCR.
 Fill percentage from distance:
-`fill = (40 - d_cm) / 38 × 100`. So 8 cm ≈ 84% (ALERT), 15 cm ≈ 66% (ACTIVE),
-25 cm ≈ 39% (STABLE). Over the empty bin the sensor must read a little more
-than 40 cm (about 42 cm): a reading just under 40 cm turns echo jitter into a
-fill-rate ALERT. Hold 8 cm for at least 75 s (BASELINE reports every ~61 s),
+`fill = (D - d_cm) / (D - 2) × 100`, where D is the node's `BIN_DEPTH_CM`
+(bin01: 14.0 cm, see HARDWARE.md). For bin01: 60 % = 6.8 cm, 80 % = 4.4 cm, so
+the targets are **5.5 cm (71 %, ACTIVE)** and **3.0 cm (92 %, ALERT)**. D is set
+1.5-2 cm shorter than the measured empty distance, so jitter at empty clamps to
+0 % instead of turning into a fill-rate ALERT. Hold the ALERT target for at
+least 75 s (BASELINE reports every ~61 s),
 write the time down just after placing the target, keep events at least 2 min
 from the phase edges and at least 125 s apart (a step's fill rate is held until
 the second velocity-window closure, up to ~122 s).
 
-A sudden step is also a fast fill rate. Placing a target at 15 cm shows ACTIVE
+A sudden step is also a fast fill rate. Placing the ACTIVE target shows ACTIVE
 within a second, then a fill-rate ALERT 0-61 s later for about 61 s, then
-ACTIVE again. 8 cm goes straight to ALERT (fill >= 80 %).
+ACTIVE again. The ALERT target goes straight to ALERT (fill >= 80 %).
 
 **E3 — gateway footprint.** Sample mosquitto and node CPU/RSS during a run into
 `eval/footprint.csv`. Supports the claim that the gateway tier fits Pi-class

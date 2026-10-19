@@ -28,8 +28,8 @@ same run label on every node's rows, so mixing nodes would corrupt every metric.
 events.csv (iso_time,event_type,note; edit it in a text editor, no commas in
 notes; times without an offset are this PC's local time):
   baseline-start / baseline-end / adaptive-start / adaptive-end  phase windows
-  alert   target placed at 8 cm (counts toward recall)
-  active  target placed at 15 cm
+  alert   target placed at the ALERT distance (bin01: 3.0 cm; counts toward recall)
+  active  target placed at the ACTIVE distance (bin01: 5.5 cm)
   clear   target removed
 Log the phase windows. Without them the phase length falls back to the first
 and last row of the label, which is too short for a sparse ADAPTIVE phase.
@@ -72,11 +72,14 @@ GAS5_THRESHOLD = 3500        # GAS5_THRESHOLD, raw ADC (MQ-5 removed, kept for o
 
 # A fill-rate ALERT is backed by a real fill change when the node's own dF/dt on
 # that row shows a rise of at least REAL_STEP_PCT within one velocity window
-# (VEL_WINDOW_MS is 60 s; about 61 s with loop timing). One HC-SR04 echo step of
-# jitter (about 0.86 %) gives about 51 %/hr, a 5 % rise about 295 %/hr, and the
-# smallest deliberate step in the protocol (empty to 15 cm, about 66 %) hits the
-# 500 %/hr clamp. dfdt is held between window closures, so a row still in ALERT
-# after the target was removed carries the rise that caused it.
+# (VEL_WINDOW_MS is 60 s; about 61 s with loop timing). A 5 % rise is about
+# 295 %/hr; the smallest deliberate step in the protocol (empty to the ACTIVE
+# target, about 70 %) hits the 500 %/hr clamp. Jitter of one HC-SR04 echo step
+# (0.33 cm) is 2.75 % (162 %/hr) in bin01's 14 cm bin and 0.86 % (51 %/hr) in a
+# 40 cm bin, so it reads as false; a 1 cm reflection jump in the small bin
+# (8 %) would read as real, but at empty the depth margin clamps it to 0 %.
+# dfdt is held between window closures, so a row still in ALERT after the
+# target was removed carries the rise that caused it.
 REAL_STEP_PCT = 5.0
 VEL_WINDOW_S = 61.0
 REAL_RATE_PCT_HR = REAL_STEP_PCT * 3600.0 / VEL_WINDOW_S
@@ -262,7 +265,7 @@ def tcr(base, adapt, wb, wa):
 # ---------------------------------------------------------------------------
 EVENTS_TEMPLATE = """iso_time,event_type,note
 2000-01-01 14:00:00,baseline-start,EXAMPLE ROW - replace with real times
-2000-01-01 14:05:00,alert,target at 8 cm (about 84 %) - expect ALERT
+2000-01-01 14:05:00,alert,target at 3.0 cm (about 92 %) - expect ALERT
 2000-01-01 14:06:15,clear,target removed
 2000-01-01 14:30:00,baseline-end,EXAMPLE ROW
 """
@@ -363,7 +366,7 @@ def recall(rows, ev, mode, slack_ms):
     so the test is whether a row reporting fill >= 80 % arrived within 60 s.
     The window opens slack_ms before the logged time, because the operator logs
     an event a few seconds after placing the target (latency is then negative).
-    Within it, the first row reporting fill >= 80 % (the 8 cm target itself) is
+    Within it, the first row reporting fill >= 80 % (the ALERT target itself) is
     preferred; then the first qualifying row at or after the logged time; then
     an earlier one. This keeps a fill-rate ALERT still held from an earlier step
     from being credited to the event.

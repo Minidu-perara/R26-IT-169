@@ -61,7 +61,14 @@
 #define INA219_ADDRESS 0x40
 
 // ── HC-SR04 ───────────────────────────────────────────────────────────────
-#define BIN_DEPTH_CM    40.0f   // empty bin = sensor to bin floor distance
+// Per node: the distance at which fill reads 0 %. Set it 1.5-2 cm SHORTER than
+// the measured empty-bin distance, so echo jitter at empty clamps to 0 %
+// instead of reading as fill and tripping the 10 %/hr fill-rate ALERT.
+// bin02: still the old 40 cm placeholder; measure its empty bin in step E and
+// set this before flashing. Override at build time with -DBIN_DEPTH_CM=...
+#ifndef BIN_DEPTH_CM
+#define BIN_DEPTH_CM    40.0f
+#endif
 #define FILL_MAX_CM     2.0f    // full = sensor reads this close to lid
 
 // ── FSM thresholds ────────────────────────────────────────────────────────

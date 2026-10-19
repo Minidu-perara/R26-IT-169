@@ -1,0 +1,118 @@
+[  0.003] ets Jul 29 2019 12:21:46
+[  0.005] 
+[  0.009] rst:0x1 (POWERON_RESET),boot:0x17 (SPI_FAST_FLASH_BOOT)
+[  0.011] configsip: 0, SPIWP:0xee
+[  0.017] clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+[  0.020] mode:DIO, clock div:2
+[  0.023] load:0x3fff0030,len:4640
+[  0.025] load:0x40078000,len:15632
+[  0.026] load:0x40080400,len:3164
+[  0.028] entry 0x4008059c
+[  0.723] 
+[  0.724] [PROBE] start
+[  0.725] [PINS] TRIG=13 ECHO=14 DHT=4 SDA=21 SCL=22
+[  0.741] [I2C] found: 0x40
+[  0.749] [INA219] bus=4.240 V current=0.1 mA
+[  0.761] [DHT22] 31.1 C  76.4 %RH
+[  1.395] [HCSR04] min=16.8 med=16.8 max=16.8 cm timeouts=0/10
+[  1.398] [MQ135] raw=1097
+[  2.410] [I2C] found: 0x40
+[  2.417] [INA219] bus=4.240 V current=0.1 mA
+[  2.423] [DHT22] 31.1 C  76.5 %RH
+[  3.057] [HCSR04] min=15.8 med=16.8 max=16.8 cm timeouts=0/10
+[  3.059] [MQ135] raw=1104
+[  4.072] [I2C] found: 0x40
+[  4.079] [INA219] bus=4.236 V current=-0.1 mA
+[  4.085] [DHT22] 31.1 C  76.4 %RH
+[  4.719] [HCSR04] min=15.8 med=16.8 max=16.8 cm timeouts=0/10
+[  4.726] [MQ135] raw=1103
+[  5.734] [I2C] found: 0x40
+[  5.741] [INA219] bus=4.236 V current=-0.2 mA
+[  5.747] [DHT22] 31.1 C  76.4 %RH
+[  6.381] [HCSR04] min=15.8 med=16.8 max=16.8 cm timeouts=0/10
+[  6.382] [MQ135] raw=1098
+[  7.396] [I2C] found: 0x40
+[  7.403] [INA219] bus=4.240 V current=-0.1 mA
+[  7.409] [DHT22] 31.1 C  76.4 %RH
+[  8.043] [HCSR04] min=15.8 med=16.8 max=16.8 cm timeouts=0/10
+[  8.044] [MQ135] raw=1088
+[  9.059] [I2C] found: 0x40
+[  9.066] [INA219] bus=4.236 V current=-0.1 mA
+[  9.072] [DHT22] 31.1 C  76.4 %RH
+[  9.705] [HCSR04] min=15.8 med=16.8 max=16.8 cm timeouts=0/10
+[  9.706] [MQ135] raw=1088
+[ 10.721] [I2C] found: 0x40
+[ 10.728] [INA219] bus=4.240 V current=-0.2 mA
+[ 10.733] [DHT22] 31.1 C  76.4 %RH
+[ 11.367] [HCSR04] min=15.8 med=16.8 max=16.8 cm timeouts=0/10
+[ 11.368] [MQ135] raw=1095
+[ 12.383] [I2C] found: 0x40
+[ 12.390] [INA219] bus=4.240 V current=-0.3 mA
+[ 12.395] [DHT22] 31.1 C  76.4 %RH
+[ 13.030] [HCSR04] min=15.8 med=15.8 max=15.8 cm timeouts=0/10
+[ 13.032] [MQ135] raw=1092
+[ 14.044] [I2C] found: 0x40
+[ 14.052] [INA219] bus=4.240 V current=-0.1 mA
+[ 14.057] [DHT22] 31.1 C  76.4 %RH
+[ 14.691] [HCSR04] min=15.8 med=15.8 max=15.8 cm timeouts=0/10
+[ 14.694] [MQ135] raw=1090
+[ 15.706] [I2C] found: 0x40
+[ 15.714] [INA219] bus=4.236 V current=-0.2 mA
+[ 15.719] [DHT22] 31.1 C  76.5 %RH
+[ 16.353] [HCSR04] min=15.8 med=15.8 max=16.8 cm timeouts=0/10
+[ 16.354] [MQ135] raw=1101
+[ 17.368] [I2C] found: 0x40
+[ 17.376] [INA219] bus=4.240 V current=-0.2 mA
+[ 17.381] [DHT22] 31.1 C  76.4 %RH
+[ 18.015] [HCSR04] min=15.8 med=15.8 max=16.8 cm timeouts=0/10
+[ 18.016] [MQ135] raw=1089
+[ 19.030] [I2C] found: 0x40
+[ 19.038] [INA219] bus=4.236 V current=-0.1 mA
+[ 19.043] [DHT22] 31.1 C  76.4 %RH
+[ 19.677] [HCSR04] min=15.8 med=15.8 max=16.8 cm timeouts=0/10
+[ 19.680] [MQ135] raw=1103
+[ 20.692] [I2C] found: 0x40
+[ 20.700] [INA219] bus=4.236 V current=-0.2 mA
+[ 20.705] [DHT22] 31.1 C  76.4 %RH
+[ 21.339] [HCSR04] min=15.8 med=15.8 max=16.8 cm timeouts=0/10
+[ 21.340] [MQ135] raw=1104
+[ 22.354] [I2C] found: 0x40
+[ 22.362] [INA219] bus=4.240 V current=-0.1 mA
+[ 22.367] [DHT22] 31.1 C  76.4 %RH
+[ 23.001] [HCSR04] min=15.8 med=15.8 max=15.8 cm timeouts=0/10
+[ 23.004] [MQ135] raw=1104
+[ 24.016] [I2C] found: 0x40
+[ 24.024] [INA219] bus=4.240 V current=0.0 mA
+[ 24.030] [DHT22] 31.1 C  76.4 %RH
+[ 24.663] [HCSR04] min=15.8 med=15.8 max=15.8 cm timeouts=0/10
+[ 24.664] [MQ135] raw=1104
+[ 25.678] [I2C] found: 0x40
+[ 25.686] [INA219] bus=4.240 V current=-0.3 mA
+[ 25.691] [DHT22] 31.1 C  76.4 %RH
+[ 26.325] [HCSR04] min=15.8 med=15.8 max=15.8 cm timeouts=0/10
+[ 26.326] [MQ135] raw=1105
+[ 27.342] [I2C] found: 0x40
+[ 27.348] [INA219] bus=4.236 V current=0.0 mA
+[ 27.353] [DHT22] 31.1 C  76.4 %RH
+[ 27.987] [HCSR04] min=15.8 med=15.8 max=15.8 cm timeouts=0/10
+[ 27.988] [MQ135] raw=1113
+[ 29.002] [I2C] found: 0x40
+[ 29.010] [INA219] bus=4.240 V current=-0.2 mA
+[ 29.015] [DHT22] 31.1 C  76.4 %RH
+[ 29.650] [HCSR04] min=15.8 med=15.8 max=15.8 cm timeouts=0/10
+[ 29.651] [MQ135] raw=1107
+[ 30.665] [I2C] found: 0x40
+[ 30.672] [INA219] bus=4.232 V current=-0.2 mA
+[ 30.677] [DHT22] 31.1 C  76.4 %RH
+[ 31.311] [HCSR04] min=15.8 med=15.8 max=15.8 cm timeouts=0/10
+[ 31.315] [MQ135] raw=1110
+[ 32.327] [I2C] found: 0x40
+[ 32.334] [INA219] bus=4.236 V current=0.0 mA
+[ 32.339] [DHT22] 31.1 C  76.4 %RH
+[ 32.974] [HCSR04] min=15.8 med=15.8 max=15.8 cm timeouts=0/10
+[ 32.975] [MQ135] raw=1111
+[ 33.989] [I2C] found: 0x40
+[ 33.996] [INA219] bus=4.236 V current=-0.1 mA
+[ 34.001] [DHT22] 31.1 C  76.4 %RH
+[ 34.635] [HCSR04] min=15.8 med=15.8 max=15.8 cm timeouts=0/10
+[ 34.637] [MQ135] raw=1110
