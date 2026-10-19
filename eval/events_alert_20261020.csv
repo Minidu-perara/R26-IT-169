@@ -1,0 +1,9 @@
+iso_time,event_type,note
+2026-10-20 03:57:50.438,baseline-start,label quiet-baseline-20261020
+2026-10-20 04:12:50.548,baseline-end,
+2026-10-20 04:27:50.957,adaptive-start,label alert-adaptive-20261020
+2026-10-20 04:31:29.430,alert,event 1 card at 3.0 cm
+2026-10-20 04:34:56.492,clear,card removed
+2026-10-20 04:37:07.630,alert,event 2 card at 3.0 cm
+2026-10-20 04:38:45.446,clear,card removed
+2026-10-20 04:47:51.044,adaptive-end,

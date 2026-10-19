@@ -1,0 +1,5 @@
+iso_time,event_type,note
+2026-10-20 03:57:50.438,baseline-start,label quiet-baseline-20261020
+2026-10-20 04:12:50.548,baseline-end,
+2026-10-20 04:12:50.672,adaptive-start,label quiet-adaptive-20261020
+2026-10-20 04:27:50.820,adaptive-end,

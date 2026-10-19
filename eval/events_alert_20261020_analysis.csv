@@ -1,0 +1,9 @@
+﻿iso_time,event_type,note
+2026-10-20 03:57:50.438,baseline-start,label quiet-baseline-20261020 (logged)
+2026-10-20 04:12:50.548,baseline-end,(logged)
+2026-10-20 04:27:50.957,adaptive-start,label alert-adaptive-20261020 (logged)
+2026-10-20 04:30:00.000,alert,event 1 APPROXIMATE: card placed about 04:30:00 by operator recollection; the A key was pressed late at 04:31:29.430
+2026-10-20 04:34:56.492,clear,event 1 C key pressed late; the node read 0 % from 04:31:47
+2026-10-20 04:37:07.630,alert,event 2 card at 3.0 cm (logged key press)
+2026-10-20 04:38:45.446,clear,event 2 card removed (logged)
+2026-10-20 04:47:51.044,adaptive-end,(logged); event 3 was not performed

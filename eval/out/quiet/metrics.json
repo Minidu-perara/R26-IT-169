@@ -1,0 +1,171 @@
+{
+  "generated": "2026-10-20 04:43:51 Sri Lanka Standard Time",
+  "db": "C:\\Users\\MAHEES~1\\AppData\\Local\\Temp\\claude\\C--dev\\982cbb3b-0091-4891-b4d0-2a566e9870e8\\scratchpad\\stepf_quiet.db",
+  "node": "bin01",
+  "nodes_in_db": [
+    "bin01"
+  ],
+  "has_mq135": true,
+  "labels": {
+    "baseline": "quiet-baseline-20261020",
+    "adaptive": "quiet-adaptive-20261020"
+  },
+  "window": {
+    "baseline_from": "2026-10-20 03:57:50",
+    "baseline_to": "2026-10-20 04:12:50",
+    "baseline_source": "logged start/end",
+    "adaptive_from": "2026-10-20 04:12:50",
+    "adaptive_to": "2026-10-20 04:27:50",
+    "adaptive_source": "logged start/end"
+  },
+  "straddlers": {
+    "baseline": 0,
+    "adaptive": 0
+  },
+  "clipped": {
+    "baseline": 0,
+    "adaptive": 0
+  },
+  "tcr": {
+    "baseline": {
+      "tx": 14,
+      "hours": 0.25,
+      "per_hour": 55.99,
+      "window": "logged start/end"
+    },
+    "adaptive": {
+      "tx": 2,
+      "hours": 0.25,
+      "per_hour": 8.0,
+      "mean_gap_s": 450.1,
+      "window": "logged start/end"
+    },
+    "tcr_raw_pct": 85.71,
+    "tcr_normalised_pct": 85.71,
+    "phases_equal_length": true,
+    "headline_pct": 85.71,
+    "adaptive_reasons": {
+      "timer": 2
+    },
+    "adaptive_interval": {
+      "min_s": 300,
+      "max_s": 300,
+      "mean_s": 300.0,
+      "distinct": [
+        300
+      ]
+    },
+    "baseline_gaps": [],
+    "adaptive_gaps": [],
+    "tx_dropped_rows": 0,
+    "sensor_fault_rows": 0
+  },
+  "alert_recall": {
+    "status": "no alert events inside either phase",
+    "adaptive": {
+      "status": "no alert events in this phase",
+      "events": 0
+    },
+    "baseline": {
+      "status": "no alert events in this phase",
+      "events": 0
+    },
+    "unassigned_events": [],
+    "near_edge": []
+  },
+  "alert_classes": {
+    "rows": 0,
+    "episodes": 0,
+    "false_episodes": 0,
+    "false_rows": 0,
+    "by_cause": {},
+    "rate_basis": {},
+    "false_episode_list": [],
+    "unlogged_step_rows": [],
+    "rule": null
+  },
+  "power": {
+    "baseline": {
+      "status": "measured",
+      "energy_mwh": 206.536,
+      "hours": 0.218,
+      "mean_power_mw": 949.3,
+      "mean_bus_v": 4.779,
+      "mean_current_ma": 198.7,
+      "tx_row_current_ma": 200.5,
+      "sessions": [
+        {
+          "power_session": "a061f7b6",
+          "rows": 14,
+          "hours": 0.218,
+          "energy_mwh": 206.536
+        }
+      ],
+      "sessions_rejected": 0,
+      "rows_excluded": 0
+    },
+    "adaptive": {
+      "status": "measured",
+      "energy_mwh": 79.822,
+      "hours": 0.084,
+      "mean_power_mw": 954.7,
+      "mean_bus_v": 4.798,
+      "mean_current_ma": 199.0,
+      "tx_row_current_ma": 190.4,
+      "sessions": [
+        {
+          "power_session": "a061f7b6",
+          "rows": 2,
+          "hours": 0.084,
+          "energy_mwh": 79.822
+        }
+      ],
+      "sessions_rejected": 0,
+      "rows_excluded": 0
+    }
+  },
+  "blef": {
+    "status": "MODELLED, not measured",
+    "why": "DEEP_SLEEP_ENABLED is 0 and no battery is discharged during the runs, so battery life cannot be observed. The INA219 measures power on the 5 V input (see Measured power), but with deep sleep off that power is dominated by the MCU, the radio and the MQ-135 heater. This is a duty-cycle model driven by the measured transmission rate.",
+    "model": {
+      "I_deepsleep_mA": 0.01,
+      "I_idle_cpu_mA": 40.0,
+      "I_tx_window_mA": 120.0,
+      "t_tx_window_s": 2.0,
+      "t_sense_s": 0.35,
+      "battery_mAh": 2000.0
+    },
+    "adaptive_mean_interval_s": 450.1,
+    "blef_nominal": 7.39,
+    "blef_range": [
+      7.29,
+      7.42
+    ],
+    "sensitivity": [
+      {
+        "t_tx_window_s": 1.0,
+        "baseline_mA": 2.2431,
+        "adaptive_mA": 0.3077,
+        "baseline_life_days": 37.2,
+        "adaptive_life_days": 270.8,
+        "blef": 7.29
+      },
+      {
+        "t_tx_window_s": 2.0,
+        "baseline_mA": 4.2429,
+        "adaptive_mA": 0.5743,
+        "baseline_life_days": 19.6,
+        "adaptive_life_days": 145.1,
+        "blef": 7.39
+      },
+      {
+        "t_tx_window_s": 3.0,
+        "baseline_mA": 6.2428,
+        "adaptive_mA": 0.8409,
+        "baseline_life_days": 13.3,
+        "adaptive_life_days": 99.1,
+        "blef": 7.42
+      }
+    ]
+  }
+}
