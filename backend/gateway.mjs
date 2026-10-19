@@ -1,6 +1,15 @@
 // Deterministic local processing. This is not shared-uplink budget arbitration.
 export const validNodeId = value => typeof value === 'string' && /^[A-Za-z0-9_-]{1,32}$/.test(value);
+export const validRequestId = value => typeof value === 'string' && /^[A-Za-z0-9_-]{1,32}$/.test(value);
 const finite = value => typeof value === 'number' && Number.isFinite(value);
+// Empty-bin depth in use on the node. Outside 3 to 500 cm it is not a plausible
+// mounting, so it is stored as null instead of rejecting the whole packet.
+const depth = value => finite(value) && value >= 3 && value <= 500 ? value : null;
+const count = value => Number.isInteger(value) && value >= 0 && value <= 1000 ? value : null;
+export const CALIBRATION_REASONS = ['ok', 'too-few-echoes', 'spread-too-large', 'median-under-5cm',
+  'depth-out-of-range', 'save-failed'];
+export const REPORT_TYPES = ['overflow', 'damage', 'smell'];
+export const REPORT_NOTE_MAX = 280;
 
 export function describeNode(row, now = Date.now()) {
   const age = finite(row.rx_ts) ? Math.max(0, (now - row.rx_ts) / 1000) : null;
@@ -73,6 +82,7 @@ export function normalizeReading(topicNode, value, now, runLabel) {
     'bus_voltage_v','current_ma','power_mw','energy_mwh','power_sample_ms']) {
     row[field] = finite(value[field]) ? value[field] : null;
   }
+  row.depth_cm = depth(value.depth_cm);
   for (const field of ['fill_pct','humidity','batt_pct']) {
     if (row[field] !== null && (row[field] < 0 || row[field] > 100)) throw Error(`Invalid ${field}`);
   }
@@ -92,4 +102,32 @@ export function normalizeReading(topicNode, value, now, runLabel) {
 export function validLease(body) {
   return Number.isInteger(body?.interval_s) && body.interval_s >= 60 && body.interval_s <= 300 &&
     Number.isInteger(body?.ttl_s) && body.ttl_s >= 60 && body.ttl_s <= 600 && body.ttl_s >= body.interval_s;
+}
+
+// bin/{node}/calibrate/ack. Only identity and outcome are strict: a refused or
+// odd-looking ack is still recorded, because the node may have changed its depth.
+export function normalizeCalibrationAck(topicNode, value) {
+  if (!validNodeId(topicNode) || !value || typeof value !== 'object' || Array.isArray(value) ||
+      value.node_id !== topicNode || typeof value.ok !== 'boolean' ||
+      !(value.request_id === '' || validRequestId(value.request_id))) throw Error('Invalid calibration acknowledgment');
+  return {node_id: topicNode, request_id: value.request_id, ok: value.ok,
+    depth_cm: depth(value.depth_cm),
+    median_cm: finite(value.median_cm) ? value.median_cm : null,
+    n: count(value.n), pings: count(value.pings),
+    spread_cm: finite(value.spread_cm) && value.spread_cm >= 0 ? value.spread_cm : null,
+    reason: typeof value.reason === 'string' ? value.reason.slice(0,32) : null,
+    ts: finite(value.ts) ? value.ts : null};
+}
+
+// POST /api/reports body. isKnownNode limits reports to bins that have sent data.
+export function normalizeReport(body, isKnownNode) {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) throw Error('Body must be a JSON object');
+  if (!validNodeId(body.node_id) || !isKnownNode(body.node_id)) throw Error('Unknown bin');
+  if (!REPORT_TYPES.includes(body.type)) throw Error('Type must be overflow, damage or smell');
+  if (body.note !== undefined && body.note !== null && typeof body.note !== 'string') throw Error('Note must be text');
+  if (typeof body.note === 'string' && body.note.length > REPORT_NOTE_MAX) {
+    throw Error(`Note must be at most ${REPORT_NOTE_MAX} characters`);
+  }
+  const note = typeof body.note === 'string' ? body.note.trim() : '';
+  return {node_id: body.node_id, type: body.type, note: note || null};
 }

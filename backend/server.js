@@ -8,7 +8,8 @@ import {Server as IO} from 'socket.io';
 import mqtt from 'mqtt';
 import cors from 'cors';
 import Database from 'better-sqlite3';
-import {gatewaySnapshot, normalizeReading, validNodeId, validLease} from './gateway.mjs';
+import {gatewaySnapshot, normalizeReading, validNodeId, validLease, normalizeCalibrationAck, normalizeReport,
+  CALIBRATION_REASONS} from './gateway.mjs';
 import {collectNetworkSample} from './network-monitor.mjs';
 
 const PORT = Number(process.env.PORT || 3002);
@@ -30,7 +31,7 @@ const fields = {
   reason:'TEXT',tx_trigger:'TEXT',state_cause:'TEXT',tx_dropped:'INTEGER',sensor_fault:'INTEGER',rx_ts:'INTEGER',run_label:'TEXT',
   sensor_profile:'TEXT',power_session:'TEXT',power_profile:'TEXT',power_mode:'TEXT',policy_interval:'REAL',next_interval:'REAL',control_id:'TEXT',control_source:'TEXT',
   control_ttl:'REAL',control_version:'INTEGER',ina_present:'INTEGER',bus_voltage_v:'REAL',current_ma:'REAL',
-  power_mw:'REAL',energy_mwh:'REAL',power_sample_ms:'INTEGER',
+  power_mw:'REAL',energy_mwh:'REAL',power_sample_ms:'INTEGER',depth_cm:'REAL',
 };
 db.exec(`CREATE TABLE IF NOT EXISTS readings (id INTEGER PRIMARY KEY AUTOINCREMENT,
   ${Object.entries(fields).map(([key,type])=>`${key} ${type}`).join(',')})`);
@@ -48,7 +49,18 @@ db.exec(`CREATE INDEX IF NOT EXISTS readings_node_rx ON readings(node_id,rx_ts);
     mqtt_connected INTEGER, telemetry_rx_60s INTEGER, score REAL, status TEXT,
     optional_requests_allowed INTEGER, policy_reason TEXT, scope TEXT);
   CREATE INDEX IF NOT EXISTS network_samples_ts ON network_samples(ts);
-  CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)`);
+  CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);
+  CREATE TABLE IF NOT EXISTS calibrations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, request_id TEXT UNIQUE NOT NULL, node_id TEXT NOT NULL, run_label TEXT,
+    requested_at INTEGER NOT NULL, status TEXT NOT NULL, ack_at INTEGER, ok INTEGER, depth_cm REAL, median_cm REAL,
+    n INTEGER, pings INTEGER, spread_cm REAL, reason TEXT, ack_json TEXT);
+  CREATE INDEX IF NOT EXISTS calibrations_node ON calibrations(node_id,id);
+  CREATE TABLE IF NOT EXISTS reports (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, node_id TEXT NOT NULL, type TEXT NOT NULL, note TEXT,
+    created_at INTEGER NOT NULL, run_label TEXT);
+  CREATE INDEX IF NOT EXISTS reports_created ON reports(created_at)`);
+// A waiter does not survive a restart, so a calibration left pending is unanswered.
+db.prepare("UPDATE calibrations SET status='no-ack' WHERE status='pending'").run();
 const insert = db.prepare(`INSERT INTO readings (${Object.keys(fields).join(',')}) VALUES (${Object.keys(fields).map(k=>'@'+k).join(',')})`);
 const networkFields=['ts','run_label','platform','interface_name','local_ip','gateway_ip','ssid','signal_pct','rssi_dbm',
   'radio_type','channel','rx_rate_mbps','tx_rate_mbps','latency_ms','packet_loss_pct','mqtt_connected',
@@ -97,7 +109,52 @@ const snapshot = () => {
     ack:c.ack_json ? JSON.parse(c.ack_json) : null, ack_json:undefined}))};
 };
 
-mqttClient.on('connect',()=>mqttClient.subscribe([`${TOPIC_ROOT}/+/data`,`${TOPIC_ROOT}/+/ack`]));
+// One calibration in flight per node: nodeId -> {request_id, done(row|null)}.
+const CALIBRATION_TIMEOUT_MS=10000;
+const calibrationWaiters=new Map();
+const calibrationRow=row=>row?{...row,ok:row.ok===null?null:!!row.ok,acked_at:row.ack_at}:null;
+function awaitCalibrationAck(nodeId,request_id) {
+  let done;
+  const promise=new Promise(resolve=>{done=row=>{
+    clearTimeout(timer);
+    if (calibrationWaiters.get(nodeId)?.request_id===request_id) calibrationWaiters.delete(nodeId);
+    resolve(row);
+  };});
+  const timer=setTimeout(()=>done(null),CALIBRATION_TIMEOUT_MS);
+  calibrationWaiters.set(nodeId,{request_id,done});
+  return {promise,cancel:()=>done(null)};
+}
+function recordCalibrationAck(nodeId,value) {
+  const ack=normalizeCalibrationAck(nodeId,value);
+  const call=db.prepare('SELECT * FROM calibrations WHERE request_id=? AND node_id=?').get(ack.request_id,nodeId);
+  if (!call && ack.request_id!=='') throw Error('Unmatched calibration acknowledgment');
+  if (call?.status==='acked') throw Error('Duplicate calibration acknowledgment');
+  if (!CALIBRATION_REASONS.includes(ack.reason)) console.warn('[CAL] unknown reason',ack.reason);
+  const now=Date.now();
+  const result=[now,ack.ok?1:0,ack.depth_cm,ack.median_cm,ack.n,ack.pings,ack.spread_cm,ack.reason,JSON.stringify(value)];
+  let id;
+  if (call) {
+    // A late ack (after the 10 s reply) is still stored: the node may have changed its depth.
+    db.prepare(`UPDATE calibrations SET status='acked',ack_at=?,ok=?,depth_cm=?,median_cm=?,n=?,pings=?,spread_cm=?,reason=?,ack_json=?
+      WHERE id=?`).run(...result,call.id);
+    id=call.id;
+  } else {
+    // request_id "" answers a command this server did not send (a manual mosquitto_pub without a
+    // valid request_id). The node still calibrated, so it is logged under a synthetic id, with the
+    // ack time as requested_at and status 'unsolicited'.
+    const request_id=`unsolicited-${randomUUID().replaceAll('-','').slice(0,16)}`;
+    id=Number(db.prepare(`INSERT INTO calibrations(request_id,node_id,run_label,requested_at,status,ack_at,ok,depth_cm,median_cm,
+      n,pings,spread_cm,reason,ack_json) VALUES(?,?,?,?,'unsolicited',?,?,?,?,?,?,?,?,?)`)
+      .run(request_id,nodeId,currentRunLabel,now,...result).lastInsertRowid);
+  }
+  const row=calibrationRow(db.prepare('SELECT * FROM calibrations WHERE id=?').get(id));
+  const waiter=calibrationWaiters.get(nodeId);
+  if (call && waiter?.request_id===ack.request_id) waiter.done(row);
+  io.emit('calibration',row);
+  console.log(`[CAL] ${nodeId} ok=${row.ok} depth=${row.depth_cm} median=${row.median_cm} n=${row.n} reason=${row.reason}${!call?' (unsolicited)':call.status==='pending'?'':' (late)'}`);
+}
+
+mqttClient.on('connect',()=>mqttClient.subscribe([`${TOPIC_ROOT}/+/data`,`${TOPIC_ROOT}/+/ack`,`${TOPIC_ROOT}/+/calibrate/ack`]));
 mqttClient.on('error',error=>console.error('[MQTT]',error.message));
 mqttClient.on('message',(topic,payload,packet)=>{
   // Retained telemetry has no trustworthy receipt age. Re-inserting it on
@@ -106,8 +163,11 @@ mqttClient.on('message',(topic,payload,packet)=>{
   try {
     if (payload.length>4096) throw Error('Payload too large');
     const [root,nodeId,kind,...extra] = topic.split('/');
-    if (root!==TOPIC_ROOT || extra.length || !validNodeId(nodeId)) throw Error('Invalid topic');
+    // calibrate/ack is the only four-level topic accepted.
+    const calibrationAck = kind==='calibrate' && extra.length===1 && extra[0]==='ack';
+    if (root!==TOPIC_ROOT || (extra.length && !calibrationAck) || !validNodeId(nodeId)) throw Error('Invalid topic');
     const value = JSON.parse(payload.toString());
+    if (calibrationAck) { recordCalibrationAck(nodeId,value); return; }
     if (kind==='ack') {
       if (value.node_id!==nodeId || typeof value.request_id!=='string') throw Error('Invalid acknowledgment');
       const command = db.prepare('SELECT * FROM gateway_commands WHERE request_id=? AND node_id=?').get(value.request_id,nodeId);
@@ -245,6 +305,65 @@ app.post('/api/gateway/dispatch',async(_,res)=>{
   if(!state.selected_node) return res.status(409).json({error:state.decision});
   try{res.json({...await issue(state.selected_node,{interval_s:60,ttl_s:180}),decision:state.decision});}
   catch(e){res.status(409).json({error:e.message});}
+});
+// Known node = one that has sent data (present in latest). Unknown or malformed IDs are both 404 here.
+const knownNodeGuard = (req,res,next)=>validNodeId(req.params.nodeId)&&latest.has(req.params.nodeId) ? next() : res.status(404).json({error:'Unknown node'});
+app.post('/api/nodes/:nodeId/calibrate',knownNodeGuard,async(req,res)=>{
+  const nodeId=req.params.nodeId;
+  if(!mqttClient.connected) return res.status(503).json({error:'Broker disconnected; command not sent'});
+  if(calibrationWaiters.has(nodeId)) return res.status(409).json({error:'A calibration for this node is still pending'});
+  const request_id=randomUUID().replaceAll('-','').slice(0,16);
+  let ack=null;
+  // Express 4 does not catch a rejected async handler: an uncaught SQLite error here would end the process.
+  try {
+    db.prepare('INSERT INTO calibrations(request_id,node_id,run_label,requested_at,status) VALUES(?,?,?,?,?)')
+      .run(request_id,nodeId,currentRunLabel,Date.now(),'pending');
+    // Wait before publishing so an ack that beats the publish callback is not missed.
+    ack=awaitCalibrationAck(nodeId,request_id);
+    try {await send(`${TOPIC_ROOT}/${nodeId}/calibrate`,JSON.stringify({request_id}));}
+    catch(e){
+      ack.cancel();
+      db.prepare("UPDATE calibrations SET status='publish-failed' WHERE request_id=? AND status='pending'").run(request_id);
+      return fail(res,e);
+    }
+    const row=await ack.promise;
+    if(!row) {
+      db.prepare("UPDATE calibrations SET status='no-ack' WHERE request_id=? AND status='pending'").run(request_id);
+      return res.status(504).json({error:'No acknowledgement within 10 s',request_id});
+    }
+    const {node_id,ok,depth_cm,median_cm,n,pings,spread_cm,reason,acked_at}=row;
+    res.json({request_id,node_id,ok,depth_cm,median_cm,n,pings,spread_cm,reason,acked_at});
+  } catch(e) {
+    ack?.cancel();
+    console.error('[CAL]',nodeId,request_id,e.message);
+    if(!res.headersSent) res.status(500).json({error:e.message,request_id});
+  }
+});
+app.get('/api/calibrations',(req,res)=>{
+  const limit=Math.max(1,Math.min(200,Number.parseInt(req.query.limit)||20));
+  const where=[], args=[];
+  if (req.query.node_id) { if(!validNodeId(req.query.node_id)) return res.status(400).json({error:'Invalid node'}); where.push('node_id=?'); args.push(req.query.node_id); }
+  res.json(db.prepare(`SELECT * FROM calibrations ${where.length?'WHERE '+where.join(' AND '):''} ORDER BY id DESC LIMIT ?`)
+    .all(...args,limit).map(calibrationRow));
+});
+// Public problem reports from /m. No auth by design, so a global rate limit bounds abuse.
+const REPORTS_PER_MINUTE=30;
+const insertReport=db.prepare('INSERT INTO reports(node_id,type,note,created_at,run_label) VALUES(@node_id,@type,@note,@created_at,@run_label)');
+app.post('/api/reports',(req,res)=>{
+  let report;
+  try {report=normalizeReport(req.body,nodeId=>latest.has(nodeId));} catch(e){return res.status(400).json({error:e.message});}
+  const created_at=Date.now();
+  if(db.prepare('SELECT COUNT(*) n FROM reports WHERE created_at>?').get(created_at-60000).n>=REPORTS_PER_MINUTE) {
+    return res.status(429).json({error:'Too many reports in the last minute; try again shortly'});
+  }
+  const values={...report,created_at,run_label:currentRunLabel};
+  const row={id:Number(insertReport.run(values).lastInsertRowid),...values};
+  io.emit('report',row);
+  res.status(201).json(row);
+});
+app.get('/api/reports',(req,res)=>{
+  const limit=Math.max(1,Math.min(200,Number.parseInt(req.query.limit)||50));
+  res.json(db.prepare('SELECT * FROM reports ORDER BY id DESC LIMIT ?').all(limit));
 });
 app.get('/api/run',(_,res)=>res.json({label:currentRunLabel}));
 app.post('/api/run',(req,res)=>{

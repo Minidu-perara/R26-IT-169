@@ -49,6 +49,8 @@
 #define TOPIC_MODE      "bin/" NODE_ID "/mode"
 #define TOPIC_OVERRIDE  "bin/" NODE_ID "/override"
 #define TOPIC_BATTERY   "bin/" NODE_ID "/battery"
+#define TOPIC_CALIBRATE      "bin/" NODE_ID "/calibrate"
+#define TOPIC_CALIBRATE_ACK  "bin/" NODE_ID "/calibrate/ack"
 
 // ── Pin map (ESP8266 GPIO numbers, not NodeMCU D-labels) ───────────────────────────────────────────────────────
 #define PIN_TRIG    13
@@ -66,10 +68,30 @@
 // instead of reading as fill and tripping the 10 %/hr fill-rate ALERT.
 // bin02: still the old 40 cm placeholder; measure its empty bin in step E and
 // set this before flashing. Override at build time with -DBIN_DEPTH_CM=...
+// This is the compiled default only: a valid depth stored in flash by
+// "Calibrate empty" (below) replaces it at boot.
 #ifndef BIN_DEPTH_CM
 #define BIN_DEPTH_CM    40.0f
 #endif
 #define FILL_MAX_CM     2.0f    // full = sensor reads this close to lid
+
+// ── Calibrate empty (bin/{node_id}/calibrate) ────────────────────────────
+// The installer mounts the node over the empty bin and the node measures its
+// own depth: CAL_PINGS echoes over CAL_SPAN_MS, and the median of the valid
+// ones minus CAL_MARGIN_CM becomes the depth (the same margin as above).
+// Refused with fewer than CAL_MIN_VALID valid echoes, a spread over
+// CAL_MAX_SPREAD_CM (max - min after dropping the single lowest and highest
+// echo, so one stray echo cannot veto it), or a median under CAL_MIN_MEDIAN_CM
+// (something is in the bin). Stored in the EEPROM sector with a magic number
+// and a checksum, and loaded at boot.
+#define CAL_PINGS          15
+#define CAL_SPAN_MS        5000UL
+#define CAL_MIN_VALID      10
+#define CAL_MAX_SPREAD_CM  1.0f
+#define CAL_MIN_MEDIAN_CM  5.0f
+#define CAL_MARGIN_CM      1.5f
+#define CAL_DEPTH_MAX_CM   400.0f      // valid depth: > FILL_MAX_CM + 3 and below this
+#define CAL_EEPROM_MAGIC   0x43414C31UL // "CAL1"; bump if the stored record changes
 
 // ── FSM thresholds ────────────────────────────────────────────────────────
 #define FILL_ALERT      80.0f   // % — triggers ALERT state

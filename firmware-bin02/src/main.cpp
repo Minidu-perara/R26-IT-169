@@ -4,6 +4,7 @@
 #include <PubSubClient.h>
 #include <BoundedDHT.h>
 #include <ArduinoJson.h>
+#include <EEPROM.h>
 #include "config.h"
 #include "sensors.h"
 #include "ina219_meter.h"
@@ -42,6 +43,16 @@ uint32_t lastMqttAttemptMs    = 0;    // last reconnect attempt, for MQTT_RETRY_
 bool     batteryDead          = false;
 float    simulatedBattPct     = 80.0f; // updated via MQTT on bin/{id}/battery
 float    lastTxFill           = 0.0f;  // deadband reference for this boot
+// Runtime bin depth: the calibrated depth from EEPROM, or the compiled
+// BIN_DEPTH_CM default when nothing valid is stored. Every fill uses it.
+float    binDepthCm           = BIN_DEPTH_CM;
+// Last valid fill, held by readSensors() through an ultrasonic dropout (NAN,
+// unknown, until a valid echo). File scope so a calibration can reset it
+// with the rest of the fill history.
+float    lastGoodFill         = NAN;
+// "Calibrate empty": onMessage() only records the request, loop() runs it.
+bool     calPending           = false;
+char     calRequestId[33]     = {};
 
 #include "gateway_control.h"
 
@@ -92,9 +103,201 @@ void connectWifi() {
     Serial.printf("[WiFi] connected; ip=%s\n", WiFi.localIP().toString().c_str());
 }
 
+// ── Calibrate empty ───────────────────────────────────────────────────────
+// bin/{node_id}/calibrate measures the empty bin and replaces the depth that
+// every fill is computed against. onMessage() only records the request: the
+// measurement takes about CAL_SPAN_MS, so it runs from loop(), outside the
+// PubSubClient callback, with mqtt.loop() and the INA219 serviced between
+// pings. The result is acknowledged on bin/{node_id}/calibrate/ack.
+
+static bool calDepthValid(float depthCm) {
+    return !isnan(depthCm) && depthCm > FILL_MAX_CM + 3.0f && depthCm < CAL_DEPTH_MAX_CM;
+}
+
+// Stored at offset 0 of the emulated EEPROM sector. The magic number and the
+// checksum make erased flash (all 0xFF) or a damaged record read as nothing
+// stored, so the compiled default is used.
+struct CalRecord {
+    uint32_t magic;
+    float    depthCm;
+    uint32_t check;
+};
+
+// FNV-1a over the fields before check.
+static uint32_t calRecordCheck(const CalRecord& rec) {
+    const uint8_t* p = reinterpret_cast<const uint8_t*>(&rec);
+    uint32_t h = 2166136261UL;
+    for (size_t i = 0; i < offsetof(CalRecord, check); ++i) { h ^= p[i]; h *= 16777619UL; }
+    return h;
+}
+
+// NAN when nothing valid is stored.
+static float calLoadDepth() {
+    CalRecord rec;
+    EEPROM.begin(sizeof(CalRecord));
+    EEPROM.get(0, rec);
+    EEPROM.end();
+    if (rec.magic != CAL_EEPROM_MAGIC || rec.check != calRecordCheck(rec)) return NAN;
+    return rec.depthCm;
+}
+
+// Committed, then read back from flash, so success means the depth is stored.
+static bool calSaveDepth(float depthCm) {
+    CalRecord rec = { CAL_EEPROM_MAGIC, depthCm, 0 };
+    rec.check = calRecordCheck(rec);
+    EEPROM.begin(sizeof(CalRecord));
+    EEPROM.put(0, rec);
+    const bool committed = EEPROM.commit();
+    EEPROM.end();
+    return committed && calLoadDepth() == depthCm;
+}
+
+// Payload resolution: 0.1 cm for depths, 0.01 cm for the median and spread.
+static double calRound(float value, float scale) {
+    return roundf(value * scale) / (double)scale;
+}
+
+// Same request_id rule as the gateway lease: 1-32 chars of [A-Za-z0-9_-].
+static bool calValidRequestId(const char* id) {
+    const size_t len = strlen(id);
+    if (!len || len > 32) return false;
+    for (size_t i = 0; i < len; ++i) {
+        const char c = id[i];
+        if (!((c>='a' && c<='z') || (c>='A' && c<='Z') || (c>='0' && c<='9') || c=='-' || c=='_')) return false;
+    }
+    return true;
+}
+
+// From onMessage(). A payload that is not JSON, or has no valid request_id,
+// still calibrates and is acknowledged with request_id "".
+static void calQueueRequest(const byte* payload, unsigned int len) {
+    char id[sizeof(calRequestId)] = {};
+    JsonDocument doc;
+    if (len <= 192 && !deserializeJson(doc, payload, len)) {
+        const char* requested = doc["request_id"] | "";
+        if (calValidRequestId(requested)) strcpy(id, requested);
+    }
+    if (calPending) {   // one queued request at a time
+        Serial.printf("[CAL] request id=\"%s\" ignored: another is queued\n", id);
+        return;
+    }
+    memcpy(calRequestId, id, sizeof(calRequestId));
+    calPending = true;
+    Serial.printf("[CAL] request id=\"%s\" queued\n", id);
+}
+
+static void calPublishAck(const char* requestId, bool ok, float medianCm,
+                          int valid, float spreadCm, const char* reason) {
+    JsonDocument doc;
+    doc["node_id"]    = NODE_ID;
+    doc["request_id"] = requestId;
+    doc["ok"]         = ok;
+    doc["depth_cm"]   = calRound(binDepthCm, 10.0f);   // the depth now in use
+    if (isnan(medianCm)) doc["median_cm"] = nullptr;
+    else                 doc["median_cm"] = calRound(medianCm, 100.0f);
+    doc["n"]          = valid;
+    doc["pings"]      = CAL_PINGS;
+    if (isnan(spreadCm)) doc["spread_cm"] = nullptr;
+    else                 doc["spread_cm"] = calRound(spreadCm, 100.0f);
+    doc["reason"]     = reason;
+    doc["ts"]         = millis();
+    char buf[256];   // worst case 197 bytes (32-char id, longest reason)
+    const size_t needed = measureJson(doc);
+    const bool fits = !doc.overflowed() && needed < sizeof(buf) &&
+                      serializeJson(doc, buf, sizeof(buf)) == needed;
+    // The explicit (payload, length, retained=false) overload: QoS 0, not retained.
+    const bool sent = fits && mqtt.connected() &&
+        mqtt.publish(TOPIC_CALIBRATE_ACK, reinterpret_cast<const uint8_t*>(buf),
+                     (unsigned int)needed, false);
+    Serial.printf("[CAL] ack %s %s\n", sent ? "published" : "FAILED",
+                  fits ? buf : "(does not fit)");
+}
+
+// Waits until gapMs after sinceMs with the broker and the INA219 serviced.
+// A message that arrives here only sets a flag, exactly as in loop().
+static void calServiceWait(uint32_t sinceMs, uint32_t gapMs) {
+    while (millis() - sinceMs < gapMs) {
+        if (mqtt.connected()) mqtt.loop();
+        servicePowerMeter();
+        delay(10);
+    }
+}
+
+// Returns true when a new depth was measured, stored and applied.
+bool runCalibration() {
+    char requestId[sizeof(calRequestId)];
+    memcpy(requestId, calRequestId, sizeof(requestId));
+    calPending = false;   // a request arriving during the run queues the next one
+    Serial.printf("[CAL] start id=\"%s\" depth=%.1f cm, %d pings over %lu ms\n",
+                  requestId, binDepthCm, CAL_PINGS, (unsigned long)CAL_SPAN_MS);
+
+    // One ping per slot. The slot is far above the HC-SR04's 60 ms minimum
+    // gap, and the wait after the last ping keeps that gap before the
+    // readSensors() that follows pings again.
+    static_assert(CAL_SPAN_MS / CAL_PINGS >= 60, "HC-SR04 needs >= 60 ms between pings");
+    static_assert(CAL_MIN_VALID >= 3 && CAL_MIN_VALID <= CAL_PINGS,
+                  "the spread drops two echoes, so at least three are needed");
+    float echoes[CAL_PINGS];
+    int valid = 0;
+    for (int i = 0; i < CAL_PINGS; ++i) {
+        const uint32_t pingMs = millis();
+        const float d = Ultrasonic::measureCm();   // -1 on timeout
+        if (d > 0.0f) echoes[valid++] = d;
+        calServiceWait(pingMs, CAL_SPAN_MS / CAL_PINGS);
+    }
+
+    // Ascending insertion sort, at most CAL_PINGS values.
+    for (int i = 1; i < valid; ++i) {
+        const float v = echoes[i];
+        int j = i - 1;
+        while (j >= 0 && echoes[j] > v) { echoes[j + 1] = echoes[j]; --j; }
+        echoes[j + 1] = v;
+    }
+    const float medianCm = valid == 0 ? NAN
+        : (valid % 2 ? echoes[valid / 2] : (echoes[valid / 2 - 1] + echoes[valid / 2]) / 2.0f);
+    // Max - min after dropping the single lowest and the single highest echo.
+    const float spreadCm = valid >= 3 ? echoes[valid - 2] - echoes[1] : NAN;
+
+    const char* reason = "ok";
+    float newDepthCm = NAN;
+    if (valid < CAL_MIN_VALID)               reason = "too-few-echoes";
+    else if (spreadCm > CAL_MAX_SPREAD_CM)   reason = "spread-too-large";
+    else if (medianCm < CAL_MIN_MEDIAN_CM)   reason = "median-under-5cm";
+    else {
+        newDepthCm = roundf((medianCm - CAL_MARGIN_CM) * 10.0f) / 10.0f;   // 0.1 cm
+        if (!calDepthValid(newDepthCm))      reason = "depth-out-of-range";
+        else if (!calSaveDepth(newDepthCm))  reason = "save-failed";
+    }
+    const bool ok = strcmp(reason, "ok") == 0;
+    const float oldDepthCm = binDepthCm;
+    if (ok) {
+        binDepthCm = newDepthCm;
+        // The new depth moves every computed fill at once. Without this reset
+        // the velocity window would read that step as a fill rate far above
+        // DFDT_ALERT and raise a false fill-rate ALERT, and the deadband and
+        // the dropout hold would compare against a fill on the old scale. The
+        // new reference is the calibration median at the new depth, which is
+        // 0 % by construction (the median sits CAL_MARGIN_CM beyond it).
+        const float fill = Ultrasonic::fillFromCm(medianCm, binDepthCm);
+        lastGoodFill   = fill;
+        lastTxFill     = fill;
+        fsm.prevFill   = fill;
+        fsm.velRefFill = fill;
+        fsm.velPrimed  = false;
+        fsm.dFdtHr     = 0.0f;
+    }
+    Serial.printf("[CAL] result id=\"%s\" ok=%s reason=%s valid=%d/%d median=%.2f cm "
+                  "spread=%.2f cm depth %.1f -> %.1f cm\n",
+                  requestId, ok ? "true" : "false", reason, valid, CAL_PINGS,
+                  medianCm, spreadCm, oldDepthCm, binDepthCm);
+    calPublishAck(requestId, ok, medianCm, valid, spreadCm, reason);
+    return ok;
+}
+
 // ── MQTT callbacks ────────────────────────────────────────────────────────
 void onMessage(char* topic, byte* payload, unsigned int len) {
     if (strcmp(topic, TOPIC_OVERRIDE) == 0) { gatewayHandle(payload, len); return; }
+    if (strcmp(topic, TOPIC_CALIBRATE) == 0) { calQueueRequest(payload, len); return; }
     char buf[64] = {};
     memcpy(buf, payload, min(len, (unsigned int)63));
 
@@ -124,7 +327,8 @@ bool mqttSubscribeAll() {
     ok &= mqtt.subscribe(TOPIC_MODE);
     ok &= mqtt.subscribe(TOPIC_OVERRIDE);
     ok &= mqtt.subscribe(TOPIC_BATTERY);
-    Serial.printf("[MQTT] subscribed mode+override+battery: %s\n", ok ? "ok" : "FAILED");
+    ok &= mqtt.subscribe(TOPIC_CALIBRATE);
+    Serial.printf("[MQTT] subscribed mode+override+battery+calibrate: %s\n", ok ? "ok" : "FAILED");
     return ok;
 }
 
@@ -179,6 +383,7 @@ bool publishReading(const SensorReading& r, bool isBaseline,
     doc["node_id"]  = NODE_ID;
     doc["ts"]       = millis();
     doc["fill_pct"] = r.fillPct;
+    doc["depth_cm"] = calRound(binDepthCm, 10.0f);   // the depth fill_pct used
     doc["temp_c"]   = r.tempC;
     doc["humidity"] = r.humidity;
     doc["gas_135"]  = nullptr;  // not fitted; never fabricate zero measurements
@@ -245,11 +450,10 @@ bool publishReading(const SensorReading& r, bool isBaseline,
 // instead — the fault path must never fabricate a fill value that can trip
 // urgency.
 SensorReading readSensors() {
-    static float    lastGoodFill      = NAN; // unknown until a valid echo
-    static uint16_t consecutiveFaults = 0;
+    static uint16_t consecutiveFaults = 0;   // lastGoodFill is at file scope
 
     SensorReading r;
-    float fill = Ultrasonic::readFillPct();
+    float fill = Ultrasonic::readFillPct(binDepthCm);
     if (fill < 0.0f) {
         if (consecutiveFaults < UINT16_MAX) ++consecutiveFaults;
         r.fillPct = lastGoodFill;          // hold; do NOT substitute 0
@@ -301,12 +505,24 @@ void setup() {
     pinMode(PIN_ECHO, INPUT);
     dht.begin();
 
+    // Depth before anything computes a fill: the calibrated value in EEPROM,
+    // or the compiled default when nothing valid is stored.
+    const float storedDepthCm = calLoadDepth();
+    if (calDepthValid(storedDepthCm)) {
+        binDepthCm = storedDepthCm;
+        Serial.printf("[CAL] depth %.1f cm from flash (compiled default %.1f cm)\n",
+                      binDepthCm, (float)BIN_DEPTH_CM);
+    } else {
+        binDepthCm = BIN_DEPTH_CM;
+        Serial.printf("[CAL] no valid stored depth; compiled default %.1f cm\n", binDepthCm);
+    }
+
     Wire.begin(PIN_INA_SDA, PIN_INA_SCL);
     servicePowerMeter(true);
 
     connectWifi();
 
-    // 448-byte JSON buffer + MQTT header (5), topic length (2), and topic.
+    // 896-byte JSON buffer + MQTT header (5), topic length (2), and topic.
     // The old 256-byte default silently rejected payloads above 235 bytes.
     static_assert(896 + 5 + 2 + sizeof(TOPIC_DATA) - 1 <= 1024,
                   "MQTT buffer must fit the complete data packet");
@@ -351,6 +567,18 @@ void loop() {
     }
     if (mqtt.connected()) mqtt.loop();
 
+    // "Calibrate empty" runs here, between ticks and outside the MQTT
+    // callback. After a success this tick's reading, at the new depth, is
+    // sent once as the "calibration" reading. A dead battery halts TX, so a
+    // request then is dropped unanswered (the backend reports no ack) rather
+    // than measured, stored and acked with no calibration reading to follow.
+    // It is not kept for later: it would run a stale calibration on recovery.
+    if (calPending && simulatedBattPct < BATT_DEAD) {
+        calPending = false;
+        Serial.printf("[CAL] request id=\"%s\" dropped: battery dead, TX halted\n", calRequestId);
+    }
+    const bool calibrated = calPending && runCalibration();
+
     SensorReading r = readSensors();
     // A mode callback in mqtt.loop() can reset lastTxMs after the timestamp
     // captured above. Refresh it to avoid unsigned elapsed-time underflow.
@@ -374,6 +602,11 @@ void loop() {
 
     // ── BASELINE branch ───────────────────────────────────────────────────
     if (baselineMode) {
+        // The calibration reading is one extra row. It leaves the fixed 60 s
+        // schedule (lastTxMs) and the FSM alone.
+        if (calibrated &&
+            !(mqtt.connected() && publishReading(r, true, "calibration", "calibration", 0.0f, 0.0f)))
+            Serial.println("[CAL] calibration reading not accepted by the MQTT client");
         if (now - lastTxMs >= BASELINE_INTERVAL) {
             if (mqtt.connected() && publishReading(r, true, "baseline-timer", "baseline-fixed-policy", 0.0f, 0.0f)) {
                 lastTxMs = now;
@@ -418,9 +651,13 @@ void loop() {
     const bool stateTransition = fsm.state != State::ALERT &&
                                  fsm.state != reportedState && deadbandReady;
 
-    if (urgentTransition || timerFired || deadbandCrossed || stateTransition) {
+    // The one reading after a successful calibration is sent whatever the
+    // other triggers say, and is booked like any accepted transmission below.
+    if (calibrated || urgentTransition || timerFired || deadbandCrossed || stateTransition) {
         const char* txTrigger;
-        if (urgentTransition) {
+        if (calibrated) {
+            txTrigger = "calibration";
+        } else if (urgentTransition) {
             txTrigger = "urgent-transition";
         } else if (timerFired) {
             txTrigger = effectiveInterval < fsm.txInterval ? "gateway-timer" : "timer";
@@ -431,7 +668,8 @@ void loop() {
             txTrigger = "state-transition";
         }
         const char* stateCause;
-        if (r.fillFaultSustained)               stateCause = "fill-sensor-fault";
+        if (calibrated)                         stateCause = "calibration";
+        else if (r.fillFaultSustained)          stateCause = "fill-sensor-fault";
         else if (fsm.state == State::CONSERVE)  stateCause = "low-battery";
         else if (fsm.state == State::ALERT && r.fillPct >= FILL_ALERT)
                                                 stateCause = "fill-alert";

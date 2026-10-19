@@ -49,6 +49,8 @@
 #define TOPIC_MODE      "bin/" NODE_ID "/mode"
 #define TOPIC_OVERRIDE  "bin/" NODE_ID "/override"
 #define TOPIC_BATTERY   "bin/" NODE_ID "/battery"
+#define TOPIC_CALIBRATE      "bin/" NODE_ID "/calibrate"
+#define TOPIC_CALIBRATE_ACK  "bin/" NODE_ID "/calibrate/ack"
 
 // ── Pin map (ESP32) ───────────────────────────────────────────────────────
 #define PIN_TRIG    13
@@ -68,10 +70,30 @@
 // instead of reading as fill and tripping the 10 %/hr fill-rate ALERT.
 // bin01, 20 Oct 2026: empty bin reads 15.8-16.8 cm (eval/hwcheck_bin01_20oct_empty.log),
 // so 15.8 - 1.8 = 14.0 cm. Override at build time with -DBIN_DEPTH_CM=...
+// This is the compiled default only: a valid depth stored in flash by
+// "Calibrate empty" (below) replaces it at boot.
 #ifndef BIN_DEPTH_CM
 #define BIN_DEPTH_CM    14.0f
 #endif
 #define FILL_MAX_CM     2.0f    // full = sensor reads this close to lid
+
+// ── Calibrate empty (bin/{node_id}/calibrate) ────────────────────────────
+// The installer mounts the node over the empty bin and the node measures its
+// own depth: CAL_PINGS echoes over CAL_SPAN_MS, and the median of the valid
+// ones minus CAL_MARGIN_CM becomes the depth (the same margin as above).
+// Refused with fewer than CAL_MIN_VALID valid echoes, a spread over
+// CAL_MAX_SPREAD_CM (max - min after dropping the single lowest and highest
+// echo, so one stray echo cannot veto it), or a median under CAL_MIN_MEDIAN_CM
+// (something is in the bin). Stored in NVS (Preferences) and loaded at boot.
+#define CAL_PINGS          15
+#define CAL_SPAN_MS        5000UL
+#define CAL_MIN_VALID      10
+#define CAL_MAX_SPREAD_CM  1.0f
+#define CAL_MIN_MEDIAN_CM  5.0f
+#define CAL_MARGIN_CM      1.5f
+#define CAL_DEPTH_MAX_CM   400.0f   // valid depth: > FILL_MAX_CM + 3 and below this
+#define CAL_PREFS_NS       "bincal" // Preferences namespace and key (max 15 chars)
+#define CAL_PREFS_KEY      "depth_cm"
 
 // ── FSM thresholds ────────────────────────────────────────────────────────
 #define FILL_ALERT      80.0f   // % — triggers ALERT state

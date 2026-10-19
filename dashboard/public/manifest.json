@@ -1,0 +1,15 @@
+{
+  "name": "Smart Bin",
+  "short_name": "Smart Bin",
+  "description": "Live fill levels, alerts and problem reports for the smart bins.",
+  "start_url": "/m",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#080d11",
+  "theme_color": "#080d11",
+  "icons": [
+    {"src": "/icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "/icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}

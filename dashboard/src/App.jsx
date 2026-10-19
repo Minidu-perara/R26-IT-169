@@ -1,23 +1,14 @@
 import {useEffect, useMemo, useState} from 'react'
 import {io} from 'socket.io-client'
 import {LineChart,Line,XAxis,YAxis,Tooltip,ResponsiveContainer,ReferenceLine,Legend} from 'recharts'
-
-// Served by the backend (http://192.168.1.3:3002): same origin. On the Vite dev
-// server (port 5173) the backend is on the same host at :3002.
-const BACKEND = import.meta.env.VITE_BACKEND_URL ||
-  (window.location.port === '5173' ? `${window.location.protocol}//${window.location.hostname}:3002` : window.location.origin)
+import {BACKEND,api,reportLabel} from './backend'
 
 const number = (value,digits=1) => value === null || value === undefined || !Number.isFinite(Number(value)) ? '—' : Number(value).toFixed(digits)
 const time = value => value ? new Date(value).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'}) : '—'
 const clamp = value => Math.min(100,Math.max(0,Number(value)||0))
 const signalPercent = value => value === null || value === undefined ? 0 : Math.min(100,Math.max(3,(Number(value)/4095)*100))
-
-async function api(path,body) {
-  const response = await fetch(BACKEND+path,body===undefined ? {} : {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
-  const value = await response.json()
-  if(!response.ok) throw Error(value.error || `HTTP ${response.status}`)
-  return value
-}
+const stamp = value => value ? new Date(value).toLocaleString([], {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : ''
+const depth = value => value === null || value === undefined || !Number.isFinite(Number(value)) ? 'not reported' : `${Number(value).toFixed(1)} cm`
 
 function StatusLight({on,label}) {
   return <span className={`status-light ${on?'is-on':'is-off'}`}><span className="status-dot"/>{label}</span>
@@ -59,6 +50,7 @@ function NodeCard({id,node,selected,onSelect}) {
       <p className="node-role">{id==='bin01'?'ESP32 · fill + climate + MQ-135 + power':'ESP-12E · fill + climate + power'}</p>
       {node ? <div className="node-card-facts">
         <span><b>{node.state}</b> state</span><span><b>{number(node.age_s,0)}s</b> since receipt</span><span><b>{node.mode}</b> policy</span>
+        <span><b>{depth(node.depth_cm)}</b> empty depth</span>
       </div> : <p className="empty-copy">Waiting for real telemetry. This is not simulated data.</p>}
       <div className="node-card-footer"><span className={`live-mark ${live?'is-live':''}`}/>{live?'Live telemetry':'Historical / offline'}<span className="select-prompt">{selected?'Inspecting node':'Inspect →'}</span></div>
     </div>
@@ -180,7 +172,48 @@ function PolicyPanel({node,gateway,onDispatch,busy}) {
   </section>
 }
 
-function Controls({node,onError}) {
+const CAL_CONFIRM='The bin must be empty and nothing in front of the sensor'
+const CAL_REASONS={
+  'too-few-echoes':'Fewer than 10 pings returned a valid echo. Check that the sensor faces the bin floor.',
+  'spread-too-large':'The echoes varied by more than 1 cm. Keep the bin and the sensor still, then try again.',
+  'median-under-5cm':'Something is closer than 5 cm to the sensor. Empty the bin and clear the opening.',
+  'depth-out-of-range':'The measured depth is outside the range the node accepts.',
+  'save-failed':'The node could not save the new depth to flash.',
+}
+
+// Installer action: the node pings the empty bin for about 5 s and stores the
+// new empty depth. The backend waits up to 10 s for the node's acknowledgement.
+function Calibration({node,mqttConnected}) {
+  const [busy,setBusy]=useState(false)
+  const [result,setResult]=useState(null)
+  async function calibrate() {
+    if(!window.confirm(CAL_CONFIRM)) return
+    setBusy(true);setResult(null)
+    try {
+      const ack=await api(`/api/nodes/${encodeURIComponent(node.node_id)}/calibrate`,{})
+      const echoes=[`${ack.n} of ${ack.pings} pings returned a valid echo`,
+        ack.median_cm!=null&&`median ${number(ack.median_cm)} cm`,ack.spread_cm!=null&&`spread ${number(ack.spread_cm)} cm`].filter(Boolean).join(', ')
+      setResult(ack.ok ?
+        {tone:'ok',title:`Calibrated. Empty depth is now ${depth(ack.depth_cm)}.`,detail:`${echoes}.`} :
+        {tone:'refused',title:`Not calibrated: ${ack.reason}`,detail:`${CAL_REASONS[ack.reason]||'The node refused the calibration.'} Depth in use stays ${depth(ack.depth_cm)}; ${echoes}.`})
+    } catch(e) {
+      const id=node.node_id
+      const text=e.status===504?`No acknowledgement within 10 s (request ${e.body?.request_id||'unknown'}). The node may be offline or running older firmware. Check depth_cm in its next reading before trying again.` :
+        e.status===409?`A calibration for ${id} is still pending. Wait for it to finish.` :
+        e.status===404?`${id} is not a known node yet; it must send data first.` :
+        e.status===503?'The MQTT broker is disconnected, so the command was not sent.' : `Calibration request failed: ${e.message}`
+      setResult({tone:'error',title:'Calibration not confirmed',detail:text})
+    } finally {setBusy(false)}
+  }
+  return <div className="control-block calibrate-control">
+    <div className="calibrate-copy"><span>Empty-bin calibration</span><p>Empty depth in use: <b>{depth(node.depth_cm)}</b></p><small>About 15 pings over 5 s. Run it only with the bin empty and nothing under the sensor.</small></div>
+    <button disabled={busy||mqttConnected===false} onClick={calibrate}>{busy?'Calibrating, up to 10 s':'Calibrate empty'}</button>
+    {mqttConnected===false&&!busy&&<small className="calibrate-hint">MQTT broker offline; calibration unavailable.</small>}
+    {result&&<div role="status" className={`calibrate-result is-${result.tone}`}><b>{result.title}</b><span>{result.detail}</span></div>}
+  </div>
+}
+
+function Controls({node,onError,mqttConnected}) {
   const [battery,setBattery]=useState(node?.batt_pct ?? 80)
   const [notice,setNotice]=useState('')
   const [busy,setBusy]=useState(false)
@@ -194,8 +227,18 @@ function Controls({node,onError}) {
     <div className="control-grid">
       <div className="control-block"><span>Reporting mode</span><div className="segmented">{['ADAPTIVE','BASELINE'].map(mode=><button key={mode} className={node.mode===mode?'is-active':''} disabled={busy} onClick={()=>send(`/api/mode/${node.node_id}`,{mode})}>{mode}</button>)}</div><small>Last reported: <b>{node.mode}</b></small></div>
       <div className="control-block battery-control"><label htmlFor={`battery-${node.node_id}`}>Simulated battery input <b>{battery}%</b></label><input id={`battery-${node.node_id}`} type="range" min="0" max="100" value={battery} onChange={e=>setBattery(Number(e.target.value))}/><button disabled={busy} onClick={()=>send(`/api/battery/${node.node_id}`,{value:battery})}>Apply to {node.node_id}</button><small>Software test input; this is not measured battery charge.</small></div>
+      <Calibration node={node} mqttConnected={mqttConnected}/>
     </div>
     {notice&&<p role="status" className="inline-notice">{notice}</p>}
+  </section>
+}
+
+function ProblemReports({reports,error}) {
+  return <section className="reports-panel panel">
+    <div className="section-heading"><div><span className="eyebrow">FROM THE MOBILE VIEW</span><h2>Problem reports</h2></div><span className="section-note">Submitted at /m · newest first</span></div>
+    {error?<p className="empty-copy">Reports unavailable: {error}</p>:reports.length?<ul className="report-list">
+      {reports.map((r,index)=><li key={r.id??index}><span className={`report-type type-${r.type}`}>{reportLabel(r.type)}</span><b>{r.node_id}</b><time>{stamp(r.created_at)}</time>{r.note&&<p>{r.note}</p>}</li>)}
+    </ul>:<p className="empty-copy">No problem reports yet.</p>}
   </section>
 }
 
@@ -248,17 +291,23 @@ export default function App() {
   const [filter,setFilter]=useState(''),[error,setError]=useState(''),[notice,setNotice]=useState('')
   const [connected,setConnected]=useState(false),[busy,setBusy]=useState(false)
   const [networkRows,setNetworkRows]=useState([])
+  const [reports,setReports]=useState([]),[reportsError,setReportsError]=useState('')
 
   useEffect(()=>{
     let alive=true
     const refresh=()=>api('/api/gateway').then(v=>{if(alive)setGateway(v)}).catch(e=>{if(alive)setError(e.message)})
+    // Kept out of the global error banner: an older backend without /api/reports
+    // should not block the rest of the operator view.
+    const loadReports=()=>api('/api/reports?limit=50').then(v=>{if(alive&&Array.isArray(v)){setReports(v);setReportsError('')}}).catch(e=>{if(alive)setReportsError(e.message)})
     refresh()
+    loadReports()
     api('/api/run').then(v=>{if(alive){setRun(v.label);setFilter(v.label)}}).catch(e=>{if(alive)setError(e.message)})
     api('/api/network?limit=180').then(v=>{if(alive)setNetworkRows(v)}).catch(e=>{if(alive)setError(e.message)})
     const socket=io(BACKEND)
-    socket.on('connect',()=>{setConnected(true);refresh()})
+    socket.on('connect',()=>{setConnected(true);refresh();loadReports()})
     socket.on('disconnect',()=>setConnected(false))
     socket.on('gateway',v=>{if(alive)setGateway(v)})
+    socket.on('report',v=>{if(alive&&v)setReports(list=>[v,...list.filter(r=>v.id==null||r.id!==v.id)].slice(0,50))})
     socket.on('network',v=>{if(alive)setNetworkRows(rows=>[...rows.filter(row=>row.id!==v.id),v].slice(-180))})
     const timer=setInterval(refresh,5000)
     return()=>{alive=false;clearInterval(timer);socket.disconnect()}
@@ -312,7 +361,8 @@ export default function App() {
       </section>
 
       <PolicyPanel node={node} gateway={gateway} onDispatch={dispatch} busy={busy}/>
-      <Controls key={selected} node={node} onError={setError}/>
+      <Controls key={selected} node={node} onError={setError} mqttConnected={gateway?.mqtt_connected}/>
+      <ProblemReports reports={reports} error={reportsError}/>
       <EvidenceLab selected={selected} rows={rows} stats={stats} run={run} setRun={setRun} filter={filter} setFilter={setFilter} onSetRun={setRunLabel} gateway={gateway}/>
 
       <footer><div><b>Local prototype boundary</b><p>Trusted local network · no authentication or encrypted transport claimed.</p></div><div><b>Evidence boundary</b><p>Gateway acknowledgements are excluded from sensor-message counts. Missing sensors stay missing.</p></div><div><b>Research boundary</b><p>INA219 readings become comparative evidence only after matched repeated trials; no battery-life claim is made.</p></div></footer>
