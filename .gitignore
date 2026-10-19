@@ -4,6 +4,7 @@ node_modules/
 firmware/.pio/
 firmware-bin02/.pio/
 dashboard/dist/
+__pycache__/
 
 # Databases: the live DB exists only on the EDGE laptop. Never commit one.
 *.db
