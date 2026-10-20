@@ -88,7 +88,7 @@
 #define CAL_PINGS          15
 #define CAL_SPAN_MS        5000UL
 #define CAL_MIN_VALID      10
-#define CAL_MAX_SPREAD_CM  1.0f
+#define CAL_MAX_SPREAD_CM  1.5f   // 1.0 refused bin01: its empty echo alternates 15.8 / 16.8 cm
 #define CAL_MIN_MEDIAN_CM  5.0f
 #define CAL_MARGIN_CM      1.5f
 #define CAL_DEPTH_MAX_CM   400.0f   // valid depth: > FILL_MAX_CM + 3 and below this
